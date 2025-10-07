@@ -11,6 +11,14 @@ for (var i = 0; i < array_length(unitRenderOrder); i++)
 	}
 }
 
+// Helper function to get stat color based on current/max ratio
+GetStatColor = function(_current, _max, _isDead)
+{
+	if (_isDead) return c_red;
+	if (_current < (_max * 0.5)) return c_orange;
+	return c_white;
+}
+
 
 //draw_sprite_stretched(Spr_Box,0,x+75,y+120,245,60);
 //draw_sprite_stretched(Spr_Box,0,x,y+120,74,60);
@@ -21,10 +29,10 @@ for (var i = 0; i < array_length(global.party); i++)
 	}
 
 //Positions
-//#macro COLUMN_ENEMY 15
-//#macro COLUMN_NAME 90
-//#macro COLUMN_HP 130
-//#macro COLUMN_MP 130
+#macro COLUMN_ENEMY 15
+#macro COLUMN_NAME 90
+#macro COLUMN_HP 130
+#macro COLUMN_MP 130
 
 //Draw headings
 draw_set_font(Font1);
@@ -89,8 +97,10 @@ for (var i = 0; i < array_length(partyUnits); i++)
     draw_set_halign(fa_left);
     draw_set_color(c_blue);
     var _char = partyUnits[i];
+    var _isDead = _char.hp <= 0;
+
     if (_char.id == _unitWithCurrentTurn) draw_set_color(c_yellow);
-    if (_char.hp <= 0) draw_set_color(c_red);
+    if (_isDead) draw_set_color(c_red);
     draw_text(x + COLUMN_NAME + (i * 100), y + 110, _char.name);
 
     // Draw head sprite next to the name
@@ -99,14 +109,12 @@ for (var i = 0; i < array_length(partyUnits); i++)
 
     draw_set_halign(fa_right);
 
-    draw_set_color(c_white);
-    if (_char.hp < (_char.hpMax * 0.5)) draw_set_color(c_orange);
-    if (_char.hp <= 0) draw_set_color(c_red);
+    // Draw HP with color based on value
+    draw_set_color(GetStatColor(_char.hp, _char.hpMax, _isDead));
     draw_text(x + COLUMN_HP + (i * 100), y + 130, string(_char.hp) + "/" + string(_char.hpMax));
 
-    draw_set_color(c_white);
-    if (_char.mp < (_char.mpMax * 0.5)) draw_set_color(c_orange);
-    if (_char.hp <= 0) draw_set_color(c_red);
+    // Draw MP with color based on value
+    draw_set_color(GetStatColor(_char.mp, _char.mpMax, _isDead));
     draw_text(x + COLUMN_MP + (i * 100), y + 150, string(_char.mp) + "/" + string(_char.mpMax));
 
     draw_set_color(c_white);

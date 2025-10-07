@@ -1,3 +1,11 @@
+// Battle outcome constants
+enum BATTLE_OUTCOME {
+	DEFEAT = 0,
+	VICTORY = 1,
+	FLED = 2,
+	FAILED_ESCAPE = 3
+}
+
 instance_deactivate_all(true);
 instance_activate_object(Obj_PartyData);
 
@@ -92,6 +100,100 @@ RefreshRenderOrder = function()
 }
 RefreshRenderOrder();
 
+//Build action menu for player units
+BuildActionMenu = function(_unit)
+{
+	//Compile the action menu
+	var _menuOptions = [];
+	var _subMenus = {};
+
+	//add inventory to action list
+	var _inventoryActions = [];
+	for (var i = 0; i < array_length(global.battleInventory); i++)
+	{
+		//if we have any of this item left we want to add the to the action list
+		if (global.battleInventory[i][1] > 0)
+		{
+			var _itemAction = global.battleInventory[i][0];
+			_itemAction.count = global.battleInventory[i][1];
+			array_push(_inventoryActions, _itemAction);
+		}
+	}
+
+	var _actionList = array_union(_unit.actions, _inventoryActions);
+
+	for (var i = 0; i < array_length(_actionList); i++)
+	{
+		var _action = _actionList[i];
+		var _requiresMP = _action.requiresMP;
+		var _available = !_requiresMP || _action.mpCost <= _unit.mp;
+		//Add item count to option name if necessary
+		var _nameAndCount = _action.name;
+		if (_action.subMenu == "Item") _nameAndCount += string(" x{0}", _action.count);
+		//add top level action
+		if (_action.subMenu == -1) array_push(_menuOptions,[_nameAndCount, MenuSelectAction, [_unit, _action], _available]);
+		else
+		{
+			//create or add to a submenu
+			if (is_undefined(_subMenus[$ _action.subMenu]))
+			{
+				variable_struct_set(_subMenus, _action.subMenu, [[_nameAndCount, MenuSelectAction, [_unit, _action], _available]]);
+			}
+			else
+			{
+				array_push(_subMenus[$ _action.subMenu],[_nameAndCount, MenuSelectAction, [_unit, _action], _available]);
+			}
+		}
+	}
+
+	//turn sub menus into an array
+	var _subMenusArray = variable_struct_get_names(_subMenus);
+	for (var i = 0; i < array_length(_subMenusArray); i++)
+	{
+		//sort submenu if needed
+		//(here)
+
+		//add back option at end of each submenu
+		array_push( _subMenus[$ _subMenusArray[i]] , ["Back", MenuGoBack, -1, true]);
+		//add submenu into main menu
+		array_push(_menuOptions, [_subMenusArray[i], SubMenu, [_subMenus[$ _subMenusArray[i]]], true]);
+	}
+
+	//sort top level menu
+	array_sort(_menuOptions, function(_a, _b)
+	{
+		var _Priority = function(_option)
+		{
+			if (_option[0] == "Attack") return 99;
+			if (_option[0] == "Ghost Cat") return 99;
+			if (_option[0] == "Magic") return 50;
+			if (_option[0] == "Defend") return 30;
+			if (_option[0] == "Item") return -10;
+			if (_option[0] == "Escape") return -15;
+			return 0;
+		}
+		return _Priority(_b) - _Priority(_a);
+	});
+
+	BattleMenu(x+10,y+110,_menuOptions,,74,60);
+}
+
+//Recenter living enemies after death
+RecenterEnemies = function()
+{
+	var spacing = 80;
+	var enemyCount = array_length(enemyUnits);
+	var xOffset = 0;
+	if (enemyCount == 2) xOffset = 20;
+	if (enemyCount == 3) xOffset = 60;
+	var startX = x + 140 - xOffset;
+
+	for (var i = 0; i < enemyCount; i++)
+	{
+		enemyUnits[i].targetX = startX + i * spacing;
+	}
+}
+
 
 function BattleStateSelectAction()
 {	
@@ -119,80 +221,7 @@ function BattleStateSelectAction()
 		if (_unit.object_index == Obj_BattleUnitPC)
 		{
 			_unit.defending = false; //reset Defending
-			//Compile the action menu
-			var _menuOptions = [];
-			var _subMenus = {};
-			
-			//add inventory to action list
-				var _inventoryActions = [];
-				for (var i = 0; i < array_length(global.battleInventory); i++)
-				{
-					//if we have any of this item left we want to add the to the action list
-					if (global.battleInventory[i][1] > 0)	
-					{
-						var _itemAction = global.battleInventory[i][0];
-						_itemAction.count = global.battleInventory[i][1];
-						array_push(_inventoryActions, _itemAction); 
-					}
-				}
-				
-				var _actionList = array_union(_unit.actions, _inventoryActions);
-
-			for (var i = 0; i < array_length(_actionList); i++)
-			{
-				var _action = _actionList[i];
-				var _requiresMP = _action.requiresMP;
-				var _available = !_requiresMP || _action.mpCost <= _unit.mp;
-				//Add item count to option name if necessary
-					var _nameAndCount = _action.name;
-					if (_action.subMenu == "Item") _nameAndCount += string(" x{0}", _action.count); 
-					//add top level action
-					if (_action.subMenu == -1) array_push(_menuOptions,[_nameAndCount, MenuSelectAction, [_unit, _action], _available]);
-					else 
-					{
-						//create or add to a submenu
-						if (is_undefined(_subMenus[$ _action.subMenu]))
-						{
-							variable_struct_set(_subMenus, _action.subMenu, [[_nameAndCount, MenuSelectAction, [_unit, _action], _available]]);
-						}				
-						else
-						{
-							array_push(_subMenus[$ _action.subMenu],[_nameAndCount, MenuSelectAction, [_unit, _action], _available]);
-						}
-					}
-				}
-			
-			//turn sub menus into an array
-			var _subMenusArray = variable_struct_get_names(_subMenus);
-			for (var i = 0; i < array_length(_subMenusArray); i++)
-			{
-				//sort submenu if needed
-				//(here)
-					
-				//add back option at end of each submenu
-				array_push( _subMenus[$ _subMenusArray[i]] , ["Back", MenuGoBack, -1, true]);
-				//add submenu into main menu
-				array_push(_menuOptions, [_subMenusArray[i], SubMenu, [_subMenus[$ _subMenusArray[i]]], true]);
-			}
-
-				//sort top level menu
-				array_sort(_menuOptions, function(_a, _b)
-				{
-					var _Priority = function(_option)
-					{
-						if (_option[0] == "Attack") return 99;
-						if (_option[0] == "Ghost Cat") return 99;
-						if (_option[0] == "Magic") return 50;
-						if (_option[0] == "Defend") return 30;
-						if (_option[0] == "Item") return -10;
-						if (_option[0] == "Escape") return -15;
-						return 0;
-					}
-					return _Priority(_b) - _Priority(_a);
-				});
-
-			BattleMenu(x+10,y+110,_menuOptions,,74,60);
-				
+			BuildActionMenu(_unit);
 		}
 		else
 		{
@@ -223,24 +252,7 @@ function BeginAction(_user, _action, _targets)
 			image_index = 0;
 		}
 	}
-	// Check and apply DoTs
-        if (currentUser.poisonDotTurns > 0)
-        {
-            // Reduce DoT turns
-            currentUser.poisonDotTurns--;
 
-            // Apply DoT damage
-            BattleChangeHP(currentUser, -currentUser.poisonDotDamage);
-        }
-		if (currentUser.burnDotTurns > 0)
-        {
-            // Reduce DoT turns
-            currentUser.burnDotTurns--;
-
-            // Apply DoT damage
-            BattleChangeHP(currentUser, -currentUser.burnDotDamage);
-        }
-	
 	battleState = BattleStatePerformAction;
 }
 
@@ -294,69 +306,82 @@ function BattleStatePerformAction()
 
 function BattleStateVictoryCheck()
 {
-	// Check for enemy death in BattleStateVictoryCheck
-var deadEnemyIndex = -1;
+	// Check for enemy death and remove from array
+	var deadEnemyIndex = -1;
 
-for (var i = 0; i < array_length(enemyUnits); i++) {
-    if (enemyUnits[i].hp <= 0) {
-        // Enemy is dead, store its index 
-        deadEnemyIndex = i;
-    }
-}
-// Recentering the living enemies
-if (deadEnemyIndex != -1) {
-    // Remove the dead enemy from the array
-    array_delete(enemyUnits, deadEnemyIndex, 1);
+	for (var i = 0; i < array_length(enemyUnits); i++)
+	{
+		if (enemyUnits[i].hp <= 0)
+		{
+			deadEnemyIndex = i;
+		}
+	}
 
-    // Recenter the living enemies
-    // Calculate the target positions for the living enemies
-    var spacing = 80;
-    var startX = x + 140;
-    for (var i = 0; i < array_length(enemyUnits); i++) {
-        enemyUnits[i].targetX = startX + i * spacing;
-    }
-}
-	
-	var _enemyHealth = array_any(enemyUnits, function(_unit)
+	// Recenter the living enemies
+	if (deadEnemyIndex != -1)
 	{
-		return (_unit.hp);
+		array_delete(enemyUnits, deadEnemyIndex, 1);
+		RecenterEnemies();
+	}
+
+	// Check if all enemies are dead
+	var _allEnemiesDead = !array_any(enemyUnits, function(_unit)
+	{
+		return (_unit.hp > 0);
 	});
-	
-	var _partyHealth = array_any(partyUnits, function(_unit)
+
+	// Check if all party members are dead
+	var _allPartyDead = !array_any(partyUnits, function(_unit)
 	{
-		return (_unit.hp);
+		return (_unit.hp > 0);
 	});
-	
-	if (_partyHealth <= 0)
+
+	if (_allPartyDead)
 	{
-		battleWin = 0
+		battleWin = BATTLE_OUTCOME.DEFEAT;
 		battleState = BattleStateWaitingForInput;
 	}
-	
-	if (_enemyHealth <= 0)
+	else if (_allEnemiesDead)
 	{
-		battleWin = 1
+		battleWin = BATTLE_OUTCOME.VICTORY;
 		battleState = BattleStateWaitingForInput;
 	}
-	
-	else battleState = BattleStateTurnProgression;
+	else
+	{
+		battleState = BattleStateTurnProgression;
+	}
 }
 
 function BattleStateTurnProgression()
 {
+	// Apply DoTs to the unit whose turn just ended
+	if (instance_exists(currentUser))
+	{
+		if (currentUser.poisonDotTurns > 0)
+		{
+			currentUser.poisonDotTurns--;
+			BattleChangeHP(currentUser, -currentUser.poisonDotDamage);
+		}
+		if (currentUser.burnDotTurns > 0)
+		{
+			currentUser.burnDotTurns--;
+			BattleChangeHP(currentUser, -currentUser.burnDotDamage);
+		}
+	}
+
 	battleText = ""; //reset battle text
 	turnCount++; //total turns
 	turn++;
 	//Loop turns
-	if (turn > array_length(unitTurnOrder) - 1) 
+	if (turn > array_length(unitTurnOrder) - 1)
 	{
 			turn = 0;
-			roundCount++;	
+			roundCount++;
 	}
-	
+
 	  // Call MP regeneration function here
 		MPRegenerationPerTurn();
-	
+
 	battleState = BattleStateSelectAction;
 }
 
@@ -365,88 +390,44 @@ battleState = BattleStateSelectAction;
 
 function BattleStateWaitingForInput()
 {
-	waitForInput = true;
-	if (waitForInput)
+	// Set battle text based on outcome
+	switch (battleWin)
 	{
-		if battleWin == 1
-		{
+		case BATTLE_OUTCOME.VICTORY:
 			battleText = "Party is victorious!";
-				if (keyboard_check_pressed(vk_space)) // Change vk_space to the desired button
-		        {
-		            // Reset the flag and transition to the battle win state
-		            waitForInput = false;
-		            battleState = BattleStateWin;
-		        }
-		else {return}
-		}
-	}
-	if (waitForInput)
-	{
-		if battleWin == 0
-		{
+			break;
+		case BATTLE_OUTCOME.DEFEAT:
 			battleText = "Party was defeated!";
-				if (keyboard_check_pressed(vk_space)) // Change vk_space to the desired button
-		        {
-		            // Reset the flag and transition to the battle win state
-		            waitForInput = false;
-		            battleState = BattleStateWin;
-		        }
-		else {return}
-		}
-	}
-	if (waitForInput)
-	{
-		if battleWin == 2
-		{
+			break;
+		case BATTLE_OUTCOME.FLED:
 			battleText = "Party fled...";
-				if (keyboard_check_pressed(vk_space)) // Change vk_space to the desired button
-		        {
-		            // Reset the flag and transition to the battle win state
-		            waitForInput = false;
-		            battleState = BattleStateWin;
-		        }
-		else {return}
-		}
-	}
-	if (waitForInput)
-	{
-		if battleWin == 3
-		{
+			break;
+		case BATTLE_OUTCOME.FAILED_ESCAPE:
 			battleText = "Party failed to escape!";
-				if (keyboard_check_pressed(vk_space)) // Change vk_space to the desired button
-		        {
-		            // Reset the flag and transition to the battle win state
-		            waitForInput = false;
-		            battleState = BattleStateTurnProgression;
-		        }
-		else {return}
+			break;
+	}
+
+	// Wait for spacebar to continue
+	if (keyboard_check_pressed(vk_space))
+	{
+		// Failed escape returns to battle, all others end battle
+		if (battleWin == BATTLE_OUTCOME.FAILED_ESCAPE)
+		{
+			battleState = BattleStateTurnProgression;
+		}
+		else
+		{
+			battleState = BattleStateWin;
 		}
 	}
-	
-};
+}
 
 function BattleStateWin()
 {
-	if battleWin == 1
-	{
-		instance_activate_all();
-		global.steps = 0;
-		instance_destroy(Obj_Battle);
-	}
-	
-	if battleWin == 0
-	{
-		instance_activate_all();
-		global.steps = 0;
-		instance_destroy(Obj_Battle);
-	}
-	
-	if battleWin == 2
-	{
-		instance_activate_all();
-		global.steps = 0;
-		instance_destroy(Obj_Battle);
-	}
+	// End battle and return to overworld
+	instance_activate_all();
+	global.steps = 0;
+	instance_destroy(Obj_Battle);
 }
 
 function BattleStateNapTime()
@@ -456,10 +437,11 @@ function BattleStateNapTime()
 	{
 		show_debug_message("Rolling Sleep Check");
 		battleText = string(napUnit.name) + " is stirring..."
-				
-		if keyboard_check_pressed(vk_enter){
-			show_debug_message("Enter Key Pressed, Moving On");
-			if (irandom(1) < 2)
+
+		if keyboard_check_pressed(vk_space)
+		{
+			show_debug_message("Space Bar Pressed, Moving On");
+			if (irandom(1) == 0)
 			{
 				wakeUp = 1;
 			}
@@ -467,30 +449,49 @@ function BattleStateNapTime()
 			{
 				wakeUp = 2;
 			}
-		} else {return;}
+		}
+		else
+		{
+			return;
+		}
 	}
-	
+
 	if wakeUp != 0 && (waitForInput)
+	{
 		if wakeUp == 1
+		{
+			show_debug_message("Enemy Wakes Up");
+			battleText = string(napUnit.name) + " woke up!"
+			napUnit.statusEffects.Sleep = false
+			if keyboard_check_pressed(vk_space)
 			{
-				show_debug_message("Enemy Wakes Up");
-				battleText = string(napUnit.name) + " woke up!"
-				napUnit.statusEffects.Sleep = false
-				if keyboard_check_pressed(vk_space){
-					show_debug_message("Space Bar Pressed, Moving On");
-					waitForInput = false;
-					battleState = BattleStateSelectAction;
-					exit;
-				} else {return;}
+				show_debug_message("Space Bar Pressed, Moving On");
+				waitForInput = false;
+				wakeUp = 0; // Reset for next sleeping unit
+				battleState = BattleStateSelectAction;
+				exit;
 			}
-		if wakeUp == 2 {
+			else
+			{
+				return;
+			}
+		}
+		if wakeUp == 2
+		{
 			show_debug_message("Enemy Stays Sleep")
 			battleText = string(napUnit.name) + " is sleeping..."
-				if keyboard_check_pressed(vk_space){
-					show_debug_message("Space Bar Pressed, Moving On");
-					waitForInput = false;
-					battleState = BattleStateVictoryCheck;
-					exit;
-				} else {return;}
-		}	
+			if keyboard_check_pressed(vk_space)
+			{
+				show_debug_message("Space Bar Pressed, Moving On");
+				waitForInput = false;
+				wakeUp = 0; // Reset for next sleeping unit
+				battleState = BattleStateVictoryCheck;
+				exit;
+			}
+			else
+			{
+				return;
+			}
+		}
+	}
 }
