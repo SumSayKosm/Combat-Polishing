@@ -1,0 +1,25 @@
+{
+  "$GMSound":"",
+  "%Name":"snd_OLDConsort_Legion",
+  "audioGroupId":{
+    "name":"audiogroup_default",
+    "path":"audiogroups/audiogroup_default",
+  },
+  "bitDepth":1,
+  "bitRate":128,
+  "compression":0,
+  "conversionMode":0,
+  "duration":76.40813,
+  "name":"snd_OLDConsort_Legion",
+  "parent":{
+    "name":"Music",
+    "path":"folders/Music.yy",
+  },
+  "preload":false,
+  "resourceType":"GMSound",
+  "resourceVersion":"2.0",
+  "sampleRate":44100,
+  "soundFile":"snd_OLDConsort_Legion.mp3",
+  "type":0,
+  "volume":1.0,
+}

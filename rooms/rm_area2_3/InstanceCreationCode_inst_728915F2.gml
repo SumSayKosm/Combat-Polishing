@@ -1,0 +1,1 @@
+text_id = "Standing Sign 1"

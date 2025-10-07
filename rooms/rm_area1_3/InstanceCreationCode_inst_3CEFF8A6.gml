@@ -1,0 +1,1 @@
+text_id = "Armor Stand 1";

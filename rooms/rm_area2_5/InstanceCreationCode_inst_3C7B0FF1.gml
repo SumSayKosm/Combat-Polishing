@@ -1,0 +1,1 @@
+text_id = "Idle Dog 3"

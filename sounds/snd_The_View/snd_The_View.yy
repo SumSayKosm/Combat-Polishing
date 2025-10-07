@@ -1,0 +1,25 @@
+{
+  "$GMSound":"",
+  "%Name":"snd_The_View",
+  "audioGroupId":{
+    "name":"audiogroup_default",
+    "path":"audiogroups/audiogroup_default",
+  },
+  "bitDepth":1,
+  "bitRate":128,
+  "compression":0,
+  "conversionMode":0,
+  "duration":25.6,
+  "name":"snd_The_View",
+  "parent":{
+    "name":"Music",
+    "path":"folders/Music.yy",
+  },
+  "preload":false,
+  "resourceType":"GMSound",
+  "resourceVersion":"2.0",
+  "sampleRate":44100,
+  "soundFile":"snd_The_View.wav",
+  "type":0,
+  "volume":0.59,
+}

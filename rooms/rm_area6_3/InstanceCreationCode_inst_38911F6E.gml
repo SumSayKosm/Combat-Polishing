@@ -1,0 +1,1 @@
+text_id = "Sixcat Painting 1"

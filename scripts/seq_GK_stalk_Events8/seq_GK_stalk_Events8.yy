@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"seq_GK_stalk_Events8",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"seq_GK_stalk_Events8",
+  "parent":{
+    "name":"Sequences",
+    "path":"folders/Sequences.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

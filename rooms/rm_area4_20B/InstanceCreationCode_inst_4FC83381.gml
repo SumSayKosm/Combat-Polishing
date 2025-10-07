@@ -1,0 +1,1 @@
+text_id = "Sharpe Forest Encounter"

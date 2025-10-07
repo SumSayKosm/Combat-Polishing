@@ -1,0 +1,1 @@
+text_id = "Gallery Hub Sign 1"

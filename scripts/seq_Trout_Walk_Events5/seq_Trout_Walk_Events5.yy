@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"seq_Trout_Walk_Events5",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"seq_Trout_Walk_Events5",
+  "parent":{
+    "name":"Sequences",
+    "path":"folders/Sequences.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}
