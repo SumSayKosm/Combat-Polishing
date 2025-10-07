@@ -38,7 +38,15 @@ cursor =
 	active : false
 };
 
-//Make enemies (Two Sided Combat)
+
+//Make enemies
+for (var i = 0; i < array_length(enemies); i++)
+{
+	enemyUnits[i] = instance_create_depth(x+150+(i*10), y+68+(i*20), depth-10, Obj_BattleUnitEnemy, enemies[i]);
+	array_push(units, enemyUnits[i]);
+}
+
+////Make enemies (Two Sided Combat)
 //for (var i = 0; i < array_length(enemies); i++)
 //{
 //	var enemyCount = array_length(enemies);
@@ -59,24 +67,31 @@ cursor =
 //	}
 //}
 
-// Make enemies (Front Facing Combat)
-for (var i = 0; i < array_length(enemies); i++) {
-    var xOffset = 0;
-	var enemyCount = array_length(enemies);
-    if (enemyCount == 2) xOffset = 20;
-    if (enemyCount == 3) xOffset = 60;
-
-    enemyUnits[i] = instance_create_depth(x + 140 - xOffset + (i * 80), y + 110, depth - 10, Obj_BattleUnitEnemy, enemies[i]);
-    array_push(units, enemyUnits[i]);
-}
-
-
-//Make party (Sprites Under Menus)
+//Make party
 for (var i = 0; i < array_length(global.party); i++)
 {
-	partyUnits[i] = instance_create_depth(x + 75 + (i * 100),y+120, depth-10, Obj_BattleUnitPC, global.party[i]);
+	partyUnits[i] = instance_create_depth(x+30-(i*10), y+68+(i*15), depth-10, Obj_BattleUnitPC, global.party[i]);
 	array_push(units, partyUnits[i]);
 }
+
+//// Make enemies (Front Facing Combat)
+//for (var i = 0; i < array_length(enemies); i++) {
+//    var xOffset = 0;
+//	var enemyCount = array_length(enemies);
+//    if (enemyCount == 2) xOffset = 20;
+//    if (enemyCount == 3) xOffset = 60;
+
+//    enemyUnits[i] = instance_create_depth(x + 140 - xOffset + (i * 80), y + 110, depth - 10, Obj_BattleUnitEnemy, enemies[i]);
+//    array_push(units, enemyUnits[i]);
+//}
+
+
+////Make party (Sprites Under Menus)
+//for (var i = 0; i < array_length(global.party); i++)
+//{
+//	partyUnits[i] = instance_create_depth(x + 75 + (i * 100),y+120, depth-10, Obj_BattleUnitPC, global.party[i]);
+//	array_push(units, partyUnits[i]);
+//}
 
 ////Make party ("No" Sprites)
 //for (var i = 0; i < array_length(global.party); i++)
@@ -209,7 +224,7 @@ function BattleStateSelectAction()
 			exit;
 		}
 		
-
+		
 		
 		if _unit.statusEffects.Sleep == true{
 			napUnit = _unit;
@@ -236,6 +251,7 @@ function BattleStateSelectAction()
 function BeginAction(_user, _action, _targets)
 {
 	currentUser = _user;
+	currentUser.dotAppliedThisTurn = false;
 	currentAction = _action;
 	currentTargets = _targets;
 	battleText = string_ext(_action.description, [_user.name]);
@@ -304,68 +320,126 @@ function BattleStatePerformAction()
 	}
 }
 
+//function BattleStateVictoryCheck()
+//{
+//	// Check for enemy death and remove from array
+//	var deadEnemyIndex = -1;
+
+//	for (var i = 0; i < array_length(enemyUnits); i++)
+//	{
+//		if (enemyUnits[i].hp <= 0)
+//		{
+//			deadEnemyIndex = i;
+//		}
+//	}
+
+//	// Recenter the living enemies
+//	if (deadEnemyIndex != -1)
+//	{
+//		array_delete(enemyUnits, deadEnemyIndex, 1);
+//		RecenterEnemies();
+//	}
+
+//	// Check if all enemies are dead
+//	var _allEnemiesDead = !array_any(enemyUnits, function(_unit)
+//	{
+//		return (_unit.hp > 0);
+//	});
+
+//	// Check if all party members are dead
+//	var _allPartyDead = !array_any(partyUnits, function(_unit)
+//	{
+//		return (_unit.hp > 0);
+//	});
+
+//	if (_allPartyDead)
+//	{
+//		battleWin = BATTLE_OUTCOME.DEFEAT;
+//		battleState = BattleStateWaitingForInput;
+//	}
+//	else if (_allEnemiesDead)
+//	{
+//		battleWin = BATTLE_OUTCOME.VICTORY;
+//		battleState = BattleStateWaitingForInput;
+//	}
+//	else
+//	{
+//		battleState = BattleStateTurnProgression;
+//	}
+//}
+
 function BattleStateVictoryCheck()
 {
-	// Check for enemy death and remove from array
-	var deadEnemyIndex = -1;
+    var anyDead = false;
 
-	for (var i = 0; i < array_length(enemyUnits); i++)
-	{
-		if (enemyUnits[i].hp <= 0)
-		{
-			deadEnemyIndex = i;
-		}
-	}
+    // Remove all dead enemies
+    for (var i = array_length(enemyUnits) - 1; i >= 0; i--)
+    {
+        if (enemyUnits[i].hp <= 0)
+        {
+            array_delete(enemyUnits, i, 1);
+            anyDead = true;
+        }
+    }
 
-	// Recenter the living enemies
-	if (deadEnemyIndex != -1)
-	{
-		array_delete(enemyUnits, deadEnemyIndex, 1);
-		RecenterEnemies();
-	}
+    if (anyDead)
+    {
+        RecenterEnemies();
+    }
 
-	// Check if all enemies are dead
-	var _allEnemiesDead = !array_any(enemyUnits, function(_unit)
-	{
-		return (_unit.hp > 0);
-	});
+    // Check if all enemies are dead
+    var _allEnemiesDead = !array_any(enemyUnits, function(_unit)
+    {
+        return (_unit.hp > 0);
+    });
 
-	// Check if all party members are dead
-	var _allPartyDead = !array_any(partyUnits, function(_unit)
-	{
-		return (_unit.hp > 0);
-	});
+    // Check if all party members are dead
+    var _allPartyDead = !array_any(partyUnits, function(_unit)
+    {
+        return (_unit.hp > 0);
+    });
 
-	if (_allPartyDead)
-	{
-		battleWin = BATTLE_OUTCOME.DEFEAT;
-		battleState = BattleStateWaitingForInput;
-	}
-	else if (_allEnemiesDead)
-	{
-		battleWin = BATTLE_OUTCOME.VICTORY;
-		battleState = BattleStateWaitingForInput;
-	}
-	else
-	{
-		battleState = BattleStateTurnProgression;
-	}
+    if (_allPartyDead)
+    {
+        battleWin = BATTLE_OUTCOME.DEFEAT;
+        battleState = BattleStateWaitingForInput;
+    }
+    else if (_allEnemiesDead)
+    {
+        battleWin = BATTLE_OUTCOME.VICTORY;
+        battleState = BattleStateWaitingForInput;
+    }
+    else
+    {
+        battleState = BattleStateTurnProgression;
+    }
 }
+
 
 function BattleStateTurnProgression()
 {
 	// Apply DoTs to the unit whose turn just ended
-	if (instance_exists(currentUser))
-	{
-		if (currentUser.poisonDotTurns > 0)
+	if (!currentUser.dotAppliedThisTurn){
+		if (instance_exists(currentUser))
 		{
-			currentUser.poisonDotTurns--;
-			BattleChangeHP(currentUser, -currentUser.poisonDotDamage);
-		}
-		if (currentUser.burnDotTurns > 0)
-		{
-			currentUser.burnDotTurns--;
-			BattleChangeHP(currentUser, -currentUser.burnDotDamage);
+			if (currentUser.poisonDoTTurns > 0)
+			{
+				currentUser.poisonDoTTurns--;
+				BattleChangeHP(currentUser, -currentUser.poisonDoTDamage);
+				// Immediately check for death
+	            BattleStateVictoryCheck();
+				currentUser.dotAppliedThisTurn = true;
+	            exit;
+			}
+			if (currentUser.burnDoTTurns > 0)
+			{
+				currentUser.burnDoTTurns--;
+				BattleChangeHP(currentUser, -currentUser.burnDoTDamage);
+				// Immediately check for death
+	            BattleStateVictoryCheck();
+				currentUser.dotAppliedThisTurn = true;
+				exit;
+			}
 		}
 	}
 
@@ -440,6 +514,7 @@ function BattleStateNapTime()
 
 		if keyboard_check_pressed(vk_space)
 		{
+			io_clear();
 			show_debug_message("Space Bar Pressed, Moving On");
 			if (irandom(1) == 0)
 			{

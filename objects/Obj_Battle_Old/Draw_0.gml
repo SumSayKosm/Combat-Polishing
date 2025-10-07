@@ -20,11 +20,11 @@ for (var i = 0; i < array_length(global.party); i++)
 		draw_sprite_stretched(Spr_Box,0,x + 75 + (i * 100),y+120,75,60);
 	}
 
-//Positions
-#macro COLUMN_ENEMY 15
-#macro COLUMN_NAME 90
-#macro COLUMN_HP 130
-#macro COLUMN_MP 130
+////Positions
+//#macro COLUMN_ENEMY 15
+//#macro COLUMN_NAME 90
+//#macro COLUMN_HP 130
+//#macro COLUMN_MP 130
 
 //Draw headings
 draw_set_font(Font1);

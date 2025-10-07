@@ -12,51 +12,114 @@ function NewEncounter(_enemies, _bg)
 
 #macro DEFENSE_MULTIPLIER 0.5
 
+//function BattleChangeHP(_target, _amount, _livingCheck = 0)
+//{
+//	//_livingCheck: 0 = alive only, 1 = dead only, 2 = any
+//	var _failed = false;
+//	if (_livingCheck == 0) && (_target.hp <= 0) _failed = true;
+//	if (_livingCheck == 1) && (_target.hp > 0) _failed = true;
+
+//	var _col = c_white;
+//	//Check if target is healed
+//	if (_amount > 0) _col = c_lime;
+//	if (_failed)
+//	{
+//		_col = c_white;
+//		_amount = "failed";
+//	}
+
+//	// Check if the target is defending
+//	if (_target.defending)
+//	{
+//		_amount *= DEFENSE_MULTIPLIER;
+//	}
+
+//	// Ensure that the damage is a whole number
+//	_amount = floor(_amount);
+
+//	instance_create_depth
+//	(
+//		_target.x,
+//		_target.y,
+//		_target.depth-1,
+//		Obj_BattleFloatingText,
+//		{font: Font1, col: _col, text: string(_amount)}
+//	);
+
+//	if (!_failed) _target.hp = clamp(_target.hp + _amount, 0, _target.hpMax);
+
+//	// Update the global party data
+//	for (var i = 0; i < array_length(global.party); i++)
+//	{
+//		if (global.party[i].name == _target.name)
+//		{
+//			global.party[i].hp = _target.hp;
+//			break;
+//		}
+//	}
+//}
+
 function BattleChangeHP(_target, _amount, _livingCheck = 0)
 {
-	//_livingCheck: 0 = alive only, 1 = dead only, 2 = any
-	var _failed = false;
-	if (_livingCheck == 0) && (_target.hp <= 0) _failed = true;
-	if (_livingCheck == 1) && (_target.hp > 0) _failed = true;
+	// Skip if target is dead and trying to take damage
+    if ((_amount < 0) && (_target.hp <= 0)) return;
+	
+    var _failed = false;
+    if ((_livingCheck == 0) && (_target.hp <= 0)) _failed = true;
+    if ((_livingCheck == 1) && (_target.hp > 0)) _failed = true;
 
-	var _col = c_white;
-	//Check if target is healed
-	if (_amount > 0) _col = c_lime;
-	if (_failed)
-	{
-		_col = c_white;
-		_amount = "failed";
-	}
+    var _col = c_white;
+    if (_amount > 0) _col = c_lime;
 
-	// Check if the target is defending
-	if (_target.defending)
-	{
-		_amount *= DEFENSE_MULTIPLIER;
-	}
+    var _displayAmount = _amount; // separate variable for floating text
 
-	// Ensure that the damage is a whole number
-	_amount = floor(_amount);
+    if (_failed)
+    {
+        _col = c_white;
+        _displayAmount = "failed"; // only for display
+        _amount = 0; // set numeric value to 0 so floor() works
+    }
 
-	instance_create_depth
-	(
-		_target.x,
-		_target.y,
-		_target.depth-1,
-		Obj_BattleFloatingText,
-		{font: Font1, col: _col, text: string(_amount)}
-	);
+    if (_target.defending)
+    {
+        _amount *= DEFENSE_MULTIPLIER;
+		_col = c_gray;
+		_displayAmount = "Blocked!" + string(_amount);
+    }
 
-	if (!_failed) _target.hp = clamp(_target.hp + _amount, 0, _target.hpMax);
+    _amount = floor(_amount);
 
-	// Update the global party data
-	for (var i = 0; i < array_length(global.party); i++)
-	{
-		if (global.party[i].name == _target.name)
-		{
-			global.party[i].hp = _target.hp;
-			break;
+    instance_create_depth(
+        _target.x,
+        _target.y,
+        _target.depth-1,
+        Obj_BattleFloatingText,
+        {font: Font1, col: _col, text: string(_displayAmount)}
+    );
+
+    if (!_failed) _target.hp = clamp(_target.hp + _amount, 0, _target.hpMax);
+	
+		// If damage was taken
+	    if (_amount < 0)
+	    {
+	        // Show hurt animation
+	        if (variable_instance_exists(_target, "sprites") && variable_struct_exists(_target.sprites, "hurt"))
+	        {
+	            _target.sprite_index = _target.sprites.hurt;
+				_target.image_speed = 1;
+				_target.image_index = 0;
+	        }
+
+	    // Update the global party data
+	    for (var i = 0; i < array_length(global.party); i++)
+	    {
+	        if (global.party[i].name == _target.name)
+	        {
+	            global.party[i].hp = _target.hp;
+	            break;
+	        }
+	    }
 		}
-	}
 }
 
 function BattleChangeMP(_target, _amount, _show = false)

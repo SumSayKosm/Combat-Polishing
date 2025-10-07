@@ -32,8 +32,8 @@
   "resourceVersion":"2.0",
   "solid":true,
   "spriteId":{
-    "name":"Spr_Mage",
-    "path":"sprites/Spr_Mage/Spr_Mage.yy",
+    "name":"spr_Blek_combat_idle",
+    "path":"sprites/spr_Blek_combat_idle/spr_Blek_combat_idle.yy",
   },
   "spriteMaskId":null,
   "visible":true,

@@ -9,7 +9,7 @@ global.blekActionLibrary =
 		targetRequired : true,
 		targetEnemyByDefault : true, //0: party/self, 1: enemy
 		targetAll : MODE.NEVER,
-		userAnimation : "cast",
+		userAnimation : "attack",
 		effectSprite : sAttackSlash,
 		effectOnTarget : MODE.ALWAYS,
 		func : function(_user, _targets)
@@ -19,25 +19,51 @@ global.blekActionLibrary =
 			BattleChangeMP(_user, 15)
 		}
 	},
-	GhostCatV2 :
-	{
-		name : "Ghost Cat",
-		description: "{0} calls a cat.",
-		subMenu : -1,
-		requiresMP: false,
-		targetRequired : true,
-		targetEnemyByDefault : true, //0: party/self, 1: enemy
-		targetAll : MODE.NEVER,
-		userAnimation : "cast",
-		effectSprite : sAttackSlash,
-		effectOnTarget : MODE.ALWAYS,
-		func : function(_user, _targets)
-		{
-			var _damage = 5;
-			BattleChangeHP(_targets[0], -_damage * _targets[0].aspects.slash );
-			BattleChangeMP(_user, 15)
-		}
-	},
+GhostCatV2 :
+{
+    name : "Ghost Cat",
+    description: "{0} detonates all DoT damage on the target!",
+    subMenu : -1,
+    requiresMP: true,
+    mpCost: 15, // <- base cost for the menu
+    targetRequired : true,
+    targetEnemyByDefault : true,
+    targetAll : MODE.NEVER,
+    userAnimation : "attack",
+    effectSprite : sAttackSlash,
+    effectOnTarget : MODE.ALWAYS,
+    func : function(_user, _targets)
+    {
+        var target = _targets[0];
+        var totalDoTDamage = 0;
+        var extraMPCost = 0;
+
+        if (real(target.poisonDoTTurns) > 0)
+        {
+            totalDoTDamage += real(target.poisonDoTDamage) * real(target.poisonDoTTurns);
+            extraMPCost += real(target.poisonDoTTurns);
+            target.poisonDoTTurns = 0;
+        }
+
+        if (real(target.burnDoTTurns) > 0)
+        {
+            totalDoTDamage += real(target.burnDoTDamage) * real(target.burnDoTTurns);
+            extraMPCost += real(target.burnDoTTurns);
+            target.burnDoTTurns = 0;
+        }
+
+        if (totalDoTDamage > 0)
+        {
+			show_debug_message("Detonation total damage: " + string(totalDoTDamage));
+            BattleChangeHP(target, -totalDoTDamage);
+        }
+
+        // Deduct MP dynamically
+        var finalMPCost = mpCost + extraMPCost;
+        BattleChangeMP(_user, -finalMPCost);
+    }
+},
+
 	defend :
 	{
 	    name: "Defend",
@@ -80,7 +106,7 @@ global.blekActionLibrary =
 		targetRequired: true,
 		targetEnemyByDefault: false, //0: party/self, 1: enemy
 		targetAll: MODE.NEVER,
-		userAnimation : "cast",
+		userAnimation : "attack",
 		effectSprite : sAttackHeal,
 		effectOnTarget : MODE.ALWAYS,
 		func : function(_user, _targets)
@@ -103,7 +129,7 @@ global.blekActionLibrary =
 		targetRequired: true,
 		targetEnemyByDefault: true, //0: party/self, 1: enemy
 		targetAll: MODE.NEVER,
-		userAnimation : "cast",
+		userAnimation : "attack",
 		effectSprite : sAttackSleep,
 		effectOnTarget : MODE.ALWAYS,
 		func : function(_user, _targets)
@@ -122,23 +148,23 @@ global.blekActionLibrary =
 		targetRequired: true,
 		targetEnemyByDefault: true, //0: party/self, 1: enemy
 		targetAll: MODE.NEVER,
-		userAnimation : "cast",
+		userAnimation : "attack",
 		effectSprite : sAttackSlash,
 		effectOnTarget : MODE.ALWAYS,
-		//Dot Properties
-		poisonDotTurns : 5,   // Poison lasts for 3 turns
-		poisonDotDamage : 5,  // Poison deals 5 damage per turn
+		//DoT Properties
+		poisonDoTTurns : 10,   // Poison lasts for X turns
+		poisonDoTDamage : 5,  // Poison deals Y damage per turn
 		func : function(_user, _targets)
 		{
 			// Apply initial damage
 	        BattleChangeHP(_targets[0], -5 * _targets[0].aspects.slash); // You can set the initial damage as needed
-	        // Apply DoT if dotTurns is greater than 0
-	        if (poisonDotTurns > 0)
+	        // Apply DoT if DoTTurns is greater than 0
+	        if (poisonDoTTurns > 0)
 	        {
-	            var dotTarget = _targets[0];
+	            var DoTTarget = _targets[0];
 	            // Set DoT parameters
-	            dotTarget.poisonDotTurns = poisonDotTurns;
-	            dotTarget.poisonDotDamage = poisonDotDamage;
+	            DoTTarget.poisonDoTTurns = poisonDoTTurns;
+	            DoTTarget.poisonDoTDamage = poisonDoTDamage;
 	        }
 			BattleChangeMP(_user, -mpCost)
 		}		
@@ -153,25 +179,31 @@ global.blekActionLibrary =
 		targetRequired: true,
 		targetEnemyByDefault: true, //0: party/self, 1: enemy
 		targetAll: MODE.ALWAYS,
-		userAnimation : "cast",
+		userAnimation : "attack",
 		effectSprite : sAttackFire,
 		effectOnTarget : MODE.ALWAYS,
-		//Dot Properties
-		burnDotTurns : 3,   // DOT lasts for 3 turns
-		burnDotDamage : 15,  // DOT deals 5 damage per turn
+		//DoT Properties
+		burnDoTTurns : 10,   // DoT lasts for X turns
+		burnDoTDamage : 15,  // DoT deals Y damage per turn
 		func : function(_user, _targets)
 		{
-			// Apply initial damage
-	        BattleChangeHP(_targets[0], -5 * _targets[0].aspects.fire); // You can set the initial damage as needed
-	        // Apply DoT if dotTurns is greater than 0
-	        if (burnDotTurns > 0)
-	        {
-	            var dotTarget = _targets[0];
-	            // Set DoT parameters
-	            dotTarget.burnDotTurns = burnDotTurns;
-	            dotTarget.burnDotDamage = burnDotDamage * _targets[0].aspects.fire;
-	        }
-			BattleChangeMP(_user, -mpCost)
+		    for (var i = 0; i < array_length(_targets); i++)
+		    {
+		        var target = _targets[i];
+
+		        // Apply initial damage
+		        var dmg = 5 * real(target.aspects.fire);
+		        BattleChangeHP(target, -dmg);
+
+		        // Apply DoT if applicable
+		        if (real(burnDoTTurns) > 0)
+		        {
+		            target.burnDoTTurns = real(burnDoTTurns);
+		            target.burnDoTDamage = real(burnDoTDamage) * real(target.aspects.fire);
+		        }
+		    }
+
+		    BattleChangeMP(_user, -mpCost);
 		}
 	},
 	nervesAttack :
