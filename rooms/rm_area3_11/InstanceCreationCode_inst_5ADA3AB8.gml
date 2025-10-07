@@ -1,1 +1,0 @@
-text_id = "Super Secret Wall Face"

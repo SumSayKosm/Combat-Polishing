@@ -1,1 +1,0 @@
-text_id = "Aran Dialouge 2";

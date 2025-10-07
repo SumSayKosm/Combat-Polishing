@@ -1,1 +1,0 @@
-text_id = "GK Note 4"

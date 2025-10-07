@@ -1,1 +1,0 @@
-text_id = "Art Gallery Entrance Sign"

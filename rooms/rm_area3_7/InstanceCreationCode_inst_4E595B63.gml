@@ -1,1 +1,0 @@
-text_id = "Sound Portrait 2"

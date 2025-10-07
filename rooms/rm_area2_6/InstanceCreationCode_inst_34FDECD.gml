@@ -1,1 +1,0 @@
-text_id = "Dog House Sign 3"

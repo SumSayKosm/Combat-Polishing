@@ -1,1 +1,0 @@
-text_id = "Sewing Circle 5"

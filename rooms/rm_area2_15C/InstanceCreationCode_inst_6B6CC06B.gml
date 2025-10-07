@@ -1,1 +1,0 @@
-text_id = "Rubble Chan Moves! Uwaaa <3!!!"

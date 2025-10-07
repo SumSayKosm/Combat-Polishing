@@ -1,1 +1,0 @@
-text_id = "Idle Dog 6"

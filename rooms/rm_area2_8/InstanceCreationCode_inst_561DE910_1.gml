@@ -1,1 +1,0 @@
-text_id = "Dog Cat Painting 1"

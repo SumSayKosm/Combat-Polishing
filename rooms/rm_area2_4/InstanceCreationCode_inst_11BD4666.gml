@@ -1,1 +1,0 @@
-text_id = "Crate Stack 1"

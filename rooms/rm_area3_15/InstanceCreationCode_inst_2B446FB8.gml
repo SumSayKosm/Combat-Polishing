@@ -1,1 +1,0 @@
-tag_id = "Sharpe Lever 2"

@@ -1,1 +1,0 @@
-text_id = "Sixcat Painting 2"

@@ -1,1 +1,0 @@
-text_id = "Gallery Hub Sign 2"

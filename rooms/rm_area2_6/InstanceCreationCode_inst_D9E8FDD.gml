@@ -1,1 +1,0 @@
-text_id = "Standing Sign 4"

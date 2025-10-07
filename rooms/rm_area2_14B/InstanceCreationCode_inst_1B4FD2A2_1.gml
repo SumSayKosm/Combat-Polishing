@@ -1,1 +1,0 @@
-text_id = "Rudy Post-Sharpe"

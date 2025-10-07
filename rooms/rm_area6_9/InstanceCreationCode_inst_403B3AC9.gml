@@ -1,1 +1,0 @@
-LeverTags = "Snow Gate";

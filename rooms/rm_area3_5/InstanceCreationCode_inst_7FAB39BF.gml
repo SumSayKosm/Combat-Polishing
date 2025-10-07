@@ -1,1 +1,0 @@
-LeverTags = "Sharpe Lever 1"

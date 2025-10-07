@@ -1,1 +1,0 @@
-text_id = "GK1 Painting 3"

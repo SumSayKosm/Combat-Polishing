@@ -1,1 +1,0 @@
-text_id = "Aran Painting 3"
