@@ -8,6 +8,7 @@ enum BATTLE_OUTCOME {
 
 instance_deactivate_all(true);
 instance_activate_object(Obj_PartyData);
+audio_play_sound(Trout_Boss_Battle_1,2,true);
 
 units = [];
 turn = 0;
@@ -39,11 +40,78 @@ cursor =
 };
 
 
-//Make enemies
-for (var i = 0; i < array_length(enemies); i++)
+////Make enemies
+//for (var i = 0; i < array_length(enemies); i++)
+//{
+//	enemyUnits[i] = instance_create_depth(x+150+(i*10), y+68+(i*20), depth-10, Obj_BattleUnitEnemy, enemies[i]);
+//	array_push(units, enemyUnits[i]);
+//}
+var numEnemies = array_length(enemies);
+var baseX = x + 223;
+var baseY = y + 112;
+
+var spacingX = 32; // horizontal offset (distance behind front enemy)
+var spacingY = 28; // vertical offset (distance up/down from center)
+
+for (var i = 0; i < numEnemies; i++)
 {
-	enemyUnits[i] = instance_create_depth(x+150+(i*10), y+68+(i*20), depth-10, Obj_BattleUnitEnemy, enemies[i]);
-	array_push(units, enemyUnits[i]);
+    //var placeX, 
+	//var placeY;
+
+    switch (numEnemies)
+    {
+        case 1:
+            // Single enemy, dead center
+           var posX = baseX;
+          var  posY = baseY;
+        break;
+
+        case 2:
+            // Two enemies side by side
+            posX = baseX - (i * spacingX);
+            posY = baseY + (i == 0 ? -spacingY/2 : spacingY/2);
+        break;
+
+        case 3:
+            // One front, two behind
+            if (i == 0) { posX = baseX; posY = baseY; }             // front
+            if (i == 1) { posX = baseX - spacingX; posY = baseY - spacingY; } // back-upper
+            if (i == 2) { posX = baseX - spacingX; posY = baseY + spacingY; } // back-lower
+        break;
+
+        case 4:
+            // One front, three behind in a triangle
+            if (i == 0) { posX = baseX; posY = baseY; }
+            if (i == 1) { posX = baseX - spacingX; posY = baseY - spacingY; }
+            if (i == 2) { posX = baseX - spacingX; posY = baseY + spacingY; }
+            if (i == 3) { posX = baseX - spacingX * 2; posY = baseY; } // center back
+        break;
+
+        default:
+            // 5+ enemies — stagger them into a rough triangle cluster
+            var row = floor((i - 1) / 2);
+            var offset = ((i % 2) * 2 - 1) * spacingY * (row + 1) * 0.5; 
+            posX = baseX - row * spacingX;
+            posY = baseY + offset;
+        break;
+    }
+
+    enemyUnits[i] = instance_create_depth(posX, posY, depth - 10, Obj_BattleUnitEnemy, enemies[i]);
+    array_push(units, enemyUnits[i]);
+}
+
+
+
+if (variable_instance_exists(id, "customBehaviors"))
+{
+    // Custom behaviors specified for this encounter
+    for (var i = 0; i < array_length(enemyUnits); i++)
+    {
+        if (i < array_length(customBehaviors))
+        {
+            enemyUnits[i].AIBehavior = customBehaviors[i];
+        }
+    }
 }
 
 ////Make enemies (Two Sided Combat)
@@ -70,7 +138,7 @@ for (var i = 0; i < array_length(enemies); i++)
 //Make party
 for (var i = 0; i < array_length(global.party); i++)
 {
-	partyUnits[i] = instance_create_depth(x+30-(i*10), y+68+(i*15), depth-10, Obj_BattleUnitPC, global.party[i]);
+	partyUnits[i] = instance_create_depth(x+30-(i*25), y+112+(i*35), depth-10, Obj_BattleUnitPC, global.party[i]);
 	array_push(units, partyUnits[i]);
 }
 
@@ -240,9 +308,16 @@ function BattleStateSelectAction()
 		}
 		else
 		{
-			//if unit is AI controlled:
-			var _enemyAction = _unit.AIscript();
-			if (_enemyAction != -1) BeginAction(_unit.id, _enemyAction[0], _enemyAction[1]);
+			////if unit is AI controlled:
+			//var _enemyAction = _unit.AIscript();
+			//if (_enemyAction != -1) BeginAction(_unit.id, _enemyAction[0], _enemyAction[1]);
+			
+//if unit is AI controlled:
+    // Get the AI behavior function by name
+    var _aiBehavior = global.GetEnemyAIBehavior(_unit.AIBehavior);
+    var _enemyAction = _aiBehavior(_unit);
+    if (_enemyAction != -1) BeginAction(_unit.id, _enemyAction[0], _enemyAction[1]);
+
 		}
 	}
 }
@@ -320,54 +395,6 @@ function BattleStatePerformAction()
 	}
 }
 
-//function BattleStateVictoryCheck()
-//{
-//	// Check for enemy death and remove from array
-//	var deadEnemyIndex = -1;
-
-//	for (var i = 0; i < array_length(enemyUnits); i++)
-//	{
-//		if (enemyUnits[i].hp <= 0)
-//		{
-//			deadEnemyIndex = i;
-//		}
-//	}
-
-//	// Recenter the living enemies
-//	if (deadEnemyIndex != -1)
-//	{
-//		array_delete(enemyUnits, deadEnemyIndex, 1);
-//		RecenterEnemies();
-//	}
-
-//	// Check if all enemies are dead
-//	var _allEnemiesDead = !array_any(enemyUnits, function(_unit)
-//	{
-//		return (_unit.hp > 0);
-//	});
-
-//	// Check if all party members are dead
-//	var _allPartyDead = !array_any(partyUnits, function(_unit)
-//	{
-//		return (_unit.hp > 0);
-//	});
-
-//	if (_allPartyDead)
-//	{
-//		battleWin = BATTLE_OUTCOME.DEFEAT;
-//		battleState = BattleStateWaitingForInput;
-//	}
-//	else if (_allEnemiesDead)
-//	{
-//		battleWin = BATTLE_OUTCOME.VICTORY;
-//		battleState = BattleStateWaitingForInput;
-//	}
-//	else
-//	{
-//		battleState = BattleStateTurnProgression;
-//	}
-//}
-
 function BattleStateVictoryCheck()
 {
     var anyDead = false;
@@ -377,6 +404,10 @@ function BattleStateVictoryCheck()
     {
         if (enemyUnits[i].hp <= 0)
         {
+            // Destroy instance
+            if (instance_exists(enemyUnits[i])) instance_destroy(enemyUnits[i]);
+
+            // Remove from arrays
             array_delete(enemyUnits, i, 1);
             anyDead = true;
         }
@@ -387,17 +418,28 @@ function BattleStateVictoryCheck()
         RecenterEnemies();
     }
 
-    // Check if all enemies are dead
-    var _allEnemiesDead = !array_any(enemyUnits, function(_unit)
+    // Remove all dead party units (optional, if needed)
+    for (var i = array_length(partyUnits) - 1; i >= 0; i--)
     {
-        return (_unit.hp > 0);
+        if (partyUnits[i].hp <= 0)
+        {
+            if (instance_exists(partyUnits[i])) instance_destroy(partyUnits[i]);
+            array_delete(partyUnits, i, 1);
+        }
+    }
+
+    // **Clean up unitTurnOrder**
+    unitTurnOrder = array_filter(unitTurnOrder, function(_u)
+    {
+        return instance_exists(_u) && _u.hp > 0;
     });
 
-    // Check if all party members are dead
-    var _allPartyDead = !array_any(partyUnits, function(_unit)
-    {
-        return (_unit.hp > 0);
-    });
+    // Update current turn if needed
+    if (turn >= array_length(unitTurnOrder)) turn = 0;
+
+    // Check victory/defeat
+    var _allEnemiesDead = !array_any(enemyUnits, function(_unit) { return _unit.hp > 0; });
+    var _allPartyDead = !array_any(partyUnits, function(_unit) { return _unit.hp > 0; });
 
     if (_allPartyDead)
     {
@@ -414,6 +456,7 @@ function BattleStateVictoryCheck()
         battleState = BattleStateTurnProgression;
     }
 }
+
 
 
 function BattleStateTurnProgression()
@@ -498,9 +541,17 @@ function BattleStateWaitingForInput()
 
 function BattleStateWin()
 {
+	
+	//Destroy all battle related stuffs
+	    with (Obj_BattleUnit)
+    {
+        instance_destroy();
+    }
+	
 	// End battle and return to overworld
 	instance_activate_all();
 	global.steps = 0;
+	audio_stop_sound(Trout_Boss_Battle_1);
 	instance_destroy(Obj_Battle);
 }
 

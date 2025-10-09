@@ -1,13 +1,30 @@
-function NewEncounter(_enemies, _bg)
+//function NewEncounter(_enemies, _bg)
+//{
+//	instance_create_depth
+//	(
+//		camera_get_view_x(view_camera[0]),
+//		camera_get_view_y(view_camera[0]),
+//		-9999,
+//		Obj_Battle,
+//		{enemies: _enemies, creator: id, battleBackground: _bg}
+//	);
+//}
+
+function NewEncounterCustom(_enemies, _bg, _behaviors)
 {
-	instance_create_depth
-	(
-		camera_get_view_x(view_camera[0]),
-		camera_get_view_y(view_camera[0]),
-		-9999,
-		Obj_Battle,
-		{enemies: _enemies, creator: id, battleBackground: _bg}
-	);
+    instance_create_depth
+    (
+        camera_get_view_x(view_camera[0]),
+        camera_get_view_y(view_camera[0]),
+        -9999,
+        Obj_Battle,
+        {
+            enemies: _enemies, 
+            creator: id, 
+            battleBackground: _bg,
+            customBehaviors: _behaviors  // Array of behavior names to pick from randomly
+        }
+    );
 }
 
 #macro DEFENSE_MULTIPLIER 0.5
@@ -131,13 +148,29 @@ function BattleChangeMP(_target, _amount, _show = false)
 	_target.mp = clamp(_target.mp + _amount, 0, _target.mpMax);
 }
 
+//function MPRegenerationPerTurn()
+//{
+//	var currentActor = unitTurnOrder[turn];
+//	var mpRegenerated = floor(currentActor.mpMax * currentActor.mpRegen);
+
+//	currentActor.mp = clamp(currentActor.mp + mpRegenerated, 0, currentActor.mpMax);
+//}
+
 function MPRegenerationPerTurn()
 {
-	var currentActor = unitTurnOrder[turn];
-	var mpRegenerated = floor(currentActor.mpMax * currentActor.mpRegen);
+    for (var i = 0; i < array_length(units); i++)
+    {
+        var _unit = units[i];
+        if (!instance_exists(_unit)) continue; // skip destroyed units
 
-	currentActor.mp = clamp(currentActor.mp + mpRegenerated, 0, currentActor.mpMax);
+        if (_unit.hp > 0) // optional: only regen for living units
+        {
+            var mpRegenerated = floor(_unit.mpMax * _unit.mpRegen);
+            _unit.mp = clamp(_unit.mp + mpRegenerated, 0, _unit.mpMax);
+        }
+    }
 }
+
 
 function AttemptEscape(_unit, _escapeChance)
 {
@@ -153,4 +186,80 @@ function AttemptEscape(_unit, _escapeChance)
 		Obj_Battle.battleWin = BATTLE_OUTCOME.FAILED_ESCAPE;
 		Obj_Battle.battleState = Obj_Battle.BattleStateWaitingForInput;
 	}
+}
+
+/// Draw target tooltip safely (handles single + multi target)
+function draw_target_tooltip(_target)
+{
+    // Nothing to draw
+    if (_target == noone || _target == undefined) return;
+
+    // Ensure we use the correct font
+    draw_set_font(Font1);
+    draw_set_color(c_white);
+
+    var pad = 6;            // padding inside the box
+    var boxH = 24;          // box height (adjust if your font is bigger)
+    var margin = 8;         // screen margin for clamping
+
+    // --- MULTI-TARGET: show one centered "All Enemies" label ---
+    if (is_array(_target))
+    {
+        // count valid instances
+        var validCount = 0;
+        for (var i = 0; i < array_length(_target); i++)
+        {
+            if (instance_exists(_target[i])) validCount++;
+        }
+        if (validCount <= 0) return;
+
+        var label = "All Enemies";
+        var boxW = string_width(label) + pad * 2;
+
+        var centerX = x+160;
+        var tx = centerX - boxW * 0.5;
+        var ty = 24; // top area; tweak as desired
+
+        // Clamp so it never goes off-screen
+        tx = clamp(tx, margin, room_width - boxW - margin);
+        ty = clamp(ty, margin, room_height - boxH - margin);
+
+        // Draw box then text (centered)
+        draw_sprite_stretched(Spr_Box, 0, tx, ty, boxW, boxH);
+        draw_set_halign(fa_center);
+        draw_set_valign(fa_middle);
+        draw_text(centerX, ty + boxH * 0.5, label);
+
+        // restore defaults
+        draw_set_halign(fa_left);
+        draw_set_valign(fa_top);
+        return;
+    }
+
+    // --- SINGLE TARGET ---
+    if (!instance_exists(_target)) return;
+
+    var label = string(_target.name);
+    var boxW = string_width(label) + pad * 2;
+
+    // Prefer to draw above and slightly right of the target sprite
+    var tx = _target.x + 16;
+    var ty = _target.y - boxH - 8;
+
+    // If you want the box centered on the text, use:
+    // tx = _target.x - boxW * 0.5;
+
+    // Clamp to screen so it never draws off-screen
+    tx = clamp(tx, margin, room_width - boxW - margin);
+    ty = clamp(ty, margin, room_height - boxH - margin);
+
+    // Draw box then text (left aligned inside)
+    draw_sprite_stretched(Spr_Box, 0, tx, ty, boxW, boxH);
+    draw_set_halign(fa_left);
+    draw_set_valign(fa_middle);
+    draw_text(tx + pad, ty + boxH * 0.5, label);
+
+    // restore defaults (optional)
+    draw_set_halign(fa_left);
+    draw_set_valign(fa_top);
 }

@@ -6,7 +6,7 @@ function BattleMenu(_x, _y, _options, _description = -1, _width = undefined, _he
 		options = _options;
 		description = _description;
 		var _optionsCount = array_length(_options);
-		visibleOptionsMax = _optionsCount;
+		visibleOptionsMax = 1;
 		
 		//Set up size
 		xmargin = 10;
@@ -26,22 +26,30 @@ function BattleMenu(_x, _y, _options, _description = -1, _width = undefined, _he
 			widthFull = width + xmargin * 2;
 		} else widthFull = _width;
 		
-		//Auto height
-		if (_height == undefined)
-		{
-			height = heightLine * (_optionsCount + !(description == -1));
-			heightFull = height + ymargin * 2;
-		}
-		else
-		{
-			heightFull = _height;
-			//scrolling?
-			if (heightLine * (_optionsCount + !(description == -1)) > _height - (ymargin*2))
-			{
-				scrolling = true;
-				visibleOptionsMax = (_height - ymargin * 2) div heightLine;
-			}
-		}
+		////Auto height
+		//if (_height == undefined)
+		//{
+		//	height = heightLine * (_optionsCount + !(description == -1));
+		//	heightFull = height + ymargin * 2;
+		//}
+		//else
+		//{
+		//	heightFull = _height;
+		//	//scrolling?
+		//	if (heightLine * (_optionsCount + !(description == -1)) > _height - (ymargin*2))
+		//	{
+		//		scrolling = true;
+		//		visibleOptionsMax = (_height - ymargin * 2) div heightLine;
+		//	}
+		//}
+		
+		// Height: fixed for one visible option (+ optional description)
+		var linesToShow = 1 + (description != -1);
+		height = heightLine * linesToShow;
+		heightFull = height + ymargin * 2;
+
+		// Disable scrolling entirely (we’ll handle hover manually)
+		scrolling = false;
 	}
 }
 

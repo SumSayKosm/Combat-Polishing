@@ -1,68 +1,49 @@
 global.blekActionLibrary =
 {
-	GhostCat :
+	GhostCatV2 :
 	{
-		name : "Ghost Cat",
-		description: "{0} calls a cat.",
-		subMenu : -1,
-		requiresMP: false,
-		targetRequired : true,
-		targetEnemyByDefault : true, //0: party/self, 1: enemy
-		targetAll : MODE.NEVER,
-		userAnimation : "attack",
-		effectSprite : sAttackSlash,
-		effectOnTarget : MODE.ALWAYS,
-		func : function(_user, _targets)
-		{
-			var _damage = 5;
-			BattleChangeHP(_targets[0], -_damage * _targets[0].aspects.slash );
-			BattleChangeMP(_user, 15)
-		}
+	    name : "Ghost Cat",
+	    description: "{0} triggers lingering wounds!",
+	    subMenu : -1,
+	    requiresMP: true,
+	    mpCost: 15, // <- base cost for the menu
+	    targetRequired : true,
+	    targetEnemyByDefault : true,
+	    targetAll : MODE.NEVER,
+	    userAnimation : "attack",
+	    effectSprite : sAttackSlash,
+	    effectOnTarget : MODE.ALWAYS,
+	    func : function(_user, _targets)
+	    {
+	        var target = _targets[0];
+	        var totalDoTDamage = 0;
+	        var extraMPCost = 0;
+
+	        if (real(target.poisonDoTTurns) > 0)
+	        {
+	            totalDoTDamage += real(target.poisonDoTDamage) * real(target.poisonDoTTurns);
+	            extraMPCost += real(target.poisonDoTTurns);
+	            target.poisonDoTTurns = 0;
+	        }
+
+	        if (real(target.burnDoTTurns) > 0)
+	        {
+	            totalDoTDamage += real(target.burnDoTDamage) * real(target.burnDoTTurns);
+	            extraMPCost += real(target.burnDoTTurns);
+	            target.burnDoTTurns = 0;
+	        }
+
+	        if (totalDoTDamage > 0)
+	        {
+				show_debug_message("Detonation total damage: " + string(totalDoTDamage));
+	            BattleChangeHP(target, -totalDoTDamage);
+	        }
+
+	        // Deduct MP dynamically
+	        var finalMPCost = mpCost + extraMPCost;
+	        BattleChangeMP(_user, -finalMPCost);
+	    }
 	},
-GhostCatV2 :
-{
-    name : "Ghost Cat",
-    description: "{0} detonates all DoT damage on the target!",
-    subMenu : -1,
-    requiresMP: true,
-    mpCost: 15, // <- base cost for the menu
-    targetRequired : true,
-    targetEnemyByDefault : true,
-    targetAll : MODE.NEVER,
-    userAnimation : "attack",
-    effectSprite : sAttackSlash,
-    effectOnTarget : MODE.ALWAYS,
-    func : function(_user, _targets)
-    {
-        var target = _targets[0];
-        var totalDoTDamage = 0;
-        var extraMPCost = 0;
-
-        if (real(target.poisonDoTTurns) > 0)
-        {
-            totalDoTDamage += real(target.poisonDoTDamage) * real(target.poisonDoTTurns);
-            extraMPCost += real(target.poisonDoTTurns);
-            target.poisonDoTTurns = 0;
-        }
-
-        if (real(target.burnDoTTurns) > 0)
-        {
-            totalDoTDamage += real(target.burnDoTDamage) * real(target.burnDoTTurns);
-            extraMPCost += real(target.burnDoTTurns);
-            target.burnDoTTurns = 0;
-        }
-
-        if (totalDoTDamage > 0)
-        {
-			show_debug_message("Detonation total damage: " + string(totalDoTDamage));
-            BattleChangeHP(target, -totalDoTDamage);
-        }
-
-        // Deduct MP dynamically
-        var finalMPCost = mpCost + extraMPCost;
-        BattleChangeMP(_user, -finalMPCost);
-    }
-},
 
 	defend :
 	{
@@ -187,6 +168,8 @@ GhostCatV2 :
 		burnDoTDamage : 15,  // DoT deals Y damage per turn
 		func : function(_user, _targets)
 		{
+			audio_play_sound(Snd_Fireball, 1, false);
+			
 		    for (var i = 0; i < array_length(_targets); i++)
 		    {
 		        var target = _targets[i];
