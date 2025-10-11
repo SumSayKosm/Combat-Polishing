@@ -10,8 +10,8 @@
   "name":"Obj_Battle_Old",
   "overriddenProperties":[],
   "parent":{
-    "name":"Battle Systems",
-    "path":"folders/Objects/Battle Systems.yy",
+    "name":"OldBattle",
+    "path":"folders/OldBattle.yy",
   },
   "parentObjectId":null,
   "persistent":false,

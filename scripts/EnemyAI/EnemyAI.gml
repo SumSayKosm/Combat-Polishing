@@ -32,7 +32,7 @@ global.enemyAIBehaviors = {
     // DEFENSIVE BEHAVIORS
     defensive: function(_user) {
         // Defends 60% of time, attacks 40%
-        if (random(1) < 0.6) {
+        if (random(1) < 2) {
             // Find defend action in actions array
             var _defendAction = -1;
             for (var i = 0; i < array_length(_user.actions); i++) {

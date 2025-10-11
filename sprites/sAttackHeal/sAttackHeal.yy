@@ -79,8 +79,8 @@
   "nineSlice":null,
   "origin":9,
   "parent":{
-    "name":"BattleEffects",
-    "path":"folders/Sprites/BattleEffects.yy",
+    "name":"Attack Effects",
+    "path":"folders/Sprites/Attack Effects.yy",
   },
   "preMultiplyAlpha":false,
   "resourceType":"GMSprite",

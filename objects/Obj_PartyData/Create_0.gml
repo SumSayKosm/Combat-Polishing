@@ -1,54 +1,79 @@
 global.party =
 [
 	{
-		name: "Blek",
-		hp: 100,
-		hpMax: 100,
-		mp: 250,
-		mpMax: 250,
+		name: "Knight",
+		hp: 250,
+		hpMax: 250,
+		mp: 100,
+		mpMax: 100,
 		mpRegen : .25,
 		aspects: { fire: 1, ice: 1 , slash: 1},
-		statusEffects: {Sleep: false},
-		strength: 5,
+		strength: 10,
+		magic: 1,
 		defending: false, // Flag for regular defense
 		DoTDefense: false, // Flag for defense against DoT effects
-		poisonDoTDamage : 0,
-		poisonDoTTurns : 0,
-		burnDoTTurns : 0,
-		burnDoTDamage : 0,
-		sprites: { idle: Spr_CombatBlek_Idle, hurt: Spr_CombatBlek_Hurt, attack: Spr_CombatBlek_Attack},
-		actions : [global.blekActionLibrary.GhostCatV2, global.blekActionLibrary.defend, global.blekActionLibrary.flee, global.blekActionLibrary.BurnCat, global.blekActionLibrary.PoisonCat, global.blekActionLibrary.HealCat, global.blekActionLibrary.SleepCat]
+		sprites: {idle: Spr_Knight, hurt: noone},
+		actions : [global.ActionLibrary.attack, global.ActionLibrary.HeavyBlow, global.ActionLibrary.PowerUp, global.ActionLibrary.defend]
 	},
-	
 	{
-		name: "Swordsman",
+		name: "Witch",
 		hp: 200,
 		hpMax: 200,
-		mp: 75,
-		mpMax: 75,
-		mpRegen : .50,
-		aspects: { fire: 1, ice: 1, slash: 1 },
-		statusEffects: {Sleep: false},
-		strength: 10,
+		mp: 150,
+		mpMax: 150,
+		mpRegen : .25,
+		aspects: { fire: 1, ice: 1 , slash: 1},
+		strength: 1,
+		magic: 10,
 		defending: false, // Flag for regular defense
 		DoTDefense: false, // Flag for defense against DoT effects
-		poisonDoTDamage : 0,
-		poisonDoTTurns : 0,
-		burnDoTTurns : 0,
-		burnDoTDamage : 0,
-		sprites: { idle: Spr_Swordsman_Idle ,hurt: Spr_Swordsman_Hurt, attack: Spr_Swordsman_Attack},
-		actions : [global.blekActionLibrary.nervesAttack, global.blekActionLibrary.defend, global.blekActionLibrary.flee]
-	}
-]
-
-global.battleInventory =
+		sprites: {idle: Spr_Witch, hurt: noone},
+		actions : [global.ActionLibrary.attack, global.ActionLibrary.Bolt, global.ActionLibrary.Fireball, global.ActionLibrary.defend]
+	},
+		{
+		name: "Rogue",
+		hp: 500,
+		hpMax: 500,
+		mp: 100,
+		mpMax: 100,
+		mpRegen : .25,
+		aspects: { fire: 1, ice: 1 , slash: 1},
+		strength: 1,
+		defending: false, // Flag for regular defense
+		DoTDefense: false, // Flag for defense against DoT effects
+		sprites: {idle: Spr_Rogue, hurt: noone},
+		actions : [global.ActionLibrary.attack, global.ActionLibrary.defend]
+	},	
+	{
+		name: "Doctor",
+		hp: 500,
+		hpMax: 500,
+		mp: 100,
+		mpMax: 100,
+		mpRegen : .25,
+		aspects: { fire: 1, ice: 1 , slash: 1},
+		strength: 1,
+		defending: false, // Flag for regular defense
+		DoTDefense: false, // Flag for defense against DoT effects
+		sprites: {idle: Spr_Doctor, hurt: noone},
+		actions : [global.ActionLibrary.attack, global.ActionLibrary.defend]
+	},
+	]
+	
+	
+	global.battleInventory =
 [
-	[global.blekActionLibrary.potion, 1],
-	[global.blekActionLibrary.ether, 4],
+	//[global.ActionLibrary.potion, 1],
+	//[global.ActionLibrary.ether, 4],
 ]
 
 global.inventory =
 [
-	[global.Items.potion, 1],
-	[global.Items.ether, 4],
+	//[global.Items.potion, 1],
+	//[global.Items.ether, 4],
 ]
+
+global.activeParty = [
+    global.party[0], // Knight
+    global.party[1]  // Witch (default two members)
+];

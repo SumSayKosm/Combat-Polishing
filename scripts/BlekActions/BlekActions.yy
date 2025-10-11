@@ -5,8 +5,8 @@
   "isDnD":false,
   "name":"BlekActions",
   "parent":{
-    "name":"Scripts",
-    "path":"folders/Scripts.yy",
+    "name":"OldBattle",
+    "path":"folders/Scripts/OldBattle.yy",
   },
   "resourceType":"GMScript",
   "resourceVersion":"2.0",

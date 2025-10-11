@@ -24,7 +24,9 @@ unitTurnOrder = [];
 unitRenderOrder = [];
 
 //Status Effect Stuff
-wakeUp = 0;
+battleMessageQueue = [];      // Queue of messages to show one at a time
+battleMessageDelay = 0;       // Frames to wait before showing next message
+statusProcessedThisTurn = false; // Track if we've processed statuses for current unit
 
 //Make targetting cursor
 cursor = 
@@ -39,143 +41,29 @@ cursor =
 	active : false
 };
 
-
-////Make enemies
-//for (var i = 0; i < array_length(enemies); i++)
-//{
-//	enemyUnits[i] = instance_create_depth(x+150+(i*10), y+68+(i*20), depth-10, Obj_BattleUnitEnemy, enemies[i]);
-//	array_push(units, enemyUnits[i]);
-//}
-var numEnemies = array_length(enemies);
-var baseX = x + 223;
-var baseY = y + 112;
-
-var spacingX = 32; // horizontal offset (distance behind front enemy)
-var spacingY = 28; // vertical offset (distance up/down from center)
-
-for (var i = 0; i < numEnemies; i++)
+// Enemies - vertical line on the right side
+for (var i = 0; i < array_length(enemies); i++)
 {
-    //var placeX, 
-	//var placeY;
-
-    switch (numEnemies)
-    {
-        case 1:
-            // Single enemy, dead center
-           var posX = baseX;
-          var  posY = baseY;
-        break;
-
-        case 2:
-            // Two enemies side by side
-            posX = baseX - (i * spacingX);
-            posY = baseY + (i == 0 ? -spacingY/2 : spacingY/2);
-        break;
-
-        case 3:
-            // One front, two behind
-            if (i == 0) { posX = baseX; posY = baseY; }             // front
-            if (i == 1) { posX = baseX - spacingX; posY = baseY - spacingY; } // back-upper
-            if (i == 2) { posX = baseX - spacingX; posY = baseY + spacingY; } // back-lower
-        break;
-
-        case 4:
-            // One front, three behind in a triangle
-            if (i == 0) { posX = baseX; posY = baseY; }
-            if (i == 1) { posX = baseX - spacingX; posY = baseY - spacingY; }
-            if (i == 2) { posX = baseX - spacingX; posY = baseY + spacingY; }
-            if (i == 3) { posX = baseX - spacingX * 2; posY = baseY; } // center back
-        break;
-
-        default:
-            // 5+ enemies — stagger them into a rough triangle cluster
-            var row = floor((i - 1) / 2);
-            var offset = ((i % 2) * 2 - 1) * spacingY * (row + 1) * 0.5; 
-            posX = baseX - row * spacingX;
-            posY = baseY + offset;
-        break;
-    }
-
-    enemyUnits[i] = instance_create_depth(posX, posY, depth - 10, Obj_BattleUnitEnemy, enemies[i]);
-    array_push(units, enemyUnits[i]);
+	enemyUnits[i] = instance_create_depth(x+380 +(i * 75), y+200, depth-10, Obj_BattleUnitEnemy, enemies[i]);
+	array_push(units, enemyUnits[i]);
 }
 
-
-
-if (variable_instance_exists(id, "customBehaviors"))
+// Party - vertical line on the left side
+for (var i = 0; i < array_length(global.activeParty); i++)
 {
-    // Custom behaviors specified for this encounter
-    for (var i = 0; i < array_length(enemyUnits); i++)
-    {
-        if (i < array_length(customBehaviors))
-        {
-            enemyUnits[i].AIBehavior = customBehaviors[i];
-        }
-    }
-}
-
-////Make enemies (Two Sided Combat)
-//for (var i = 0; i < array_length(enemies); i++)
-//{
-//	var enemyCount = array_length(enemies);
-//	if enemyCount = 1
-//	{
-//		enemyUnits[i] = instance_create_depth(x+140+(i*80), y+110, depth-10, Obj_BattleUnitEnemy, enemies[i]);
-//		array_push(units, enemyUnits[i]);
-//	}
-//	if enemyCount = 2
-//	{
-//	enemyUnits[i] = instance_create_depth(x+120+(i*80), y+110, depth-10, Obj_BattleUnitEnemy, enemies[i]);
-//	array_push(units, enemyUnits[i]);
-//	}
-//	if enemyCount = 3
-//	{
-//	enemyUnits[i] = instance_create_depth(x+80+(i*80), y+110, depth-10, Obj_BattleUnitEnemy, enemies[i]);
-//	array_push(units, enemyUnits[i]);
-//	}
-//}
-
-//Make party
-for (var i = 0; i < array_length(global.party); i++)
-{
-	partyUnits[i] = instance_create_depth(x+30-(i*25), y+112+(i*35), depth-10, Obj_BattleUnitPC, global.party[i]);
+	partyUnits[i] = instance_create_depth(x + 100 - (i * 75), y+200, depth-10, Obj_BattleUnitPC, global.party[i]);
 	array_push(units, partyUnits[i]);
 }
-
-//// Make enemies (Front Facing Combat)
-//for (var i = 0; i < array_length(enemies); i++) {
-//    var xOffset = 0;
-//	var enemyCount = array_length(enemies);
-//    if (enemyCount == 2) xOffset = 20;
-//    if (enemyCount == 3) xOffset = 60;
-
-//    enemyUnits[i] = instance_create_depth(x + 140 - xOffset + (i * 80), y + 110, depth - 10, Obj_BattleUnitEnemy, enemies[i]);
-//    array_push(units, enemyUnits[i]);
-//}
-
-
-////Make party (Sprites Under Menus)
-//for (var i = 0; i < array_length(global.party); i++)
-//{
-//	partyUnits[i] = instance_create_depth(x + 75 + (i * 100),y+120, depth-10, Obj_BattleUnitPC, global.party[i]);
-//	array_push(units, partyUnits[i]);
-//}
-
-////Make party ("No" Sprites)
-//for (var i = 0; i < array_length(global.party); i++)
-//{
-//	partyUnits[i] = instance_create_depth(-9999, -9999, depth, Obj_BattleUnitPC, global.party[i]);
-//	array_push(units, partyUnits[i]);
-//}
 
 //Shuffle turn order
 unitTurnOrder = array_shuffle(units);
 
-//Get render order
+//Get render order - sorts units by y position for proper depth drawing
 RefreshRenderOrder = function()
 {
 	unitRenderOrder = [];
 	array_copy(unitRenderOrder,0,units,0,array_length(units));
+	// Sort by y coordinate so units further down are drawn on top
 	array_sort(unitRenderOrder,function(_1, _2)
 	{
 		return _1.y - _2.y;
@@ -184,6 +72,7 @@ RefreshRenderOrder = function()
 RefreshRenderOrder();
 
 //Build action menu for player units
+// This compiles all available actions (attacks, magic, items) into a menu structure
 BuildActionMenu = function(_unit)
 {
 	//Compile the action menu
@@ -250,6 +139,7 @@ BuildActionMenu = function(_unit)
 			if (_option[0] == "Attack") return 99;
 			if (_option[0] == "Ghost Cat") return 99;
 			if (_option[0] == "Magic") return 50;
+			if (_option[0] == "Skills") return 50;
 			if (_option[0] == "Defend") return 30;
 			if (_option[0] == "Item") return -10;
 			if (_option[0] == "Escape") return -15;
@@ -258,70 +148,114 @@ BuildActionMenu = function(_unit)
 		return _Priority(_b) - _Priority(_a);
 	});
 
-	BattleMenu(x+10,y+110,_menuOptions,,74,60);
+	// CHANGED: Menu positioned at bottom center instead of bottom left
+	BattleMenu(x+100,y+150,_menuOptions,,74,60);
 }
 
 //Recenter living enemies after death
-RecenterEnemies = function()
-{
-	var spacing = 80;
-	var enemyCount = array_length(enemyUnits);
-	var xOffset = 0;
-	if (enemyCount == 2) xOffset = 20;
-	if (enemyCount == 3) xOffset = 60;
-	var startX = x + 140 - xOffset;
+// Redistributes enemy positions evenly when one dies
+//RecenterEnemies = function()
+//{
+//	var spacing = 70; // Vertical spacing between enemies
+//	var enemyCount = array_length(enemyUnits);
+//	var startY = y + 50; // Starting Y position
+	
+//	// Calculate total height needed and center it
+//	var totalHeight = (enemyCount - 1) * spacing;
+//	var centerOffset = totalHeight / 2;
 
-	for (var i = 0; i < enemyCount; i++)
-	{
-		enemyUnits[i].targetX = startX + i * spacing;
-	}
-}
+//	for (var i = 0; i < enemyCount; i++)
+//	{
+//		// Spread enemies vertically and center them
+//		enemyUnits[i].targetY = startY + (i * spacing) - centerOffset + 30;
+//	}
+//}
 
 
 function BattleStateSelectAction()
-{	
-	if (!instance_exists(Obj_BattleMenu))
-	{
-		//Get current unit
-		var _unit = unitTurnOrder[turn];
-		global.currentActor = _unit.name;
-		//is the unit dead or unable to act?
-		if (!instance_exists(_unit)) || (_unit.hp <= 0)
-		{
-			battleState = BattleStateVictoryCheck;
-			exit;
-		}
-		
-		
-		
-		if _unit.statusEffects.Sleep == true{
-			napUnit = _unit;
-			battleState = BattleStateNapTime;
-			exit;
-		}
-
-		//if unit is player controlled:
-		if (_unit.object_index == Obj_BattleUnitPC)
-		{
-			_unit.defending = false; //reset Defending
-			BuildActionMenu(_unit);
-		}
-		else
-		{
-			////if unit is AI controlled:
-			//var _enemyAction = _unit.AIscript();
-			//if (_enemyAction != -1) BeginAction(_unit.id, _enemyAction[0], _enemyAction[1]);
-			
-//if unit is AI controlled:
-    // Get the AI behavior function by name
-    var _aiBehavior = global.GetEnemyAIBehavior(_unit.AIBehavior);
-    var _enemyAction = _aiBehavior(_unit);
-    if (_enemyAction != -1) BeginAction(_unit.id, _enemyAction[0], _enemyAction[1]);
-
-		}
-	}
+{    
+    // If we're waiting to show a message, count down
+    if (battleMessageDelay > 0)
+    {
+        battleMessageDelay--;
+        
+        // When delay finishes, check for more messages
+        if (battleMessageDelay == 0 && array_length(battleMessageQueue) > 0)
+        {
+            battleText = battleMessageQueue[0];
+            array_delete(battleMessageQueue, 0, 1);
+            battleMessageDelay = 45; // Show each message for 45 frames
+        }
+        exit;
+    }
+    
+    if (!instance_exists(Obj_BattleMenu))
+    {
+        // Get current unit
+        var _unit = unitTurnOrder[turn];
+        global.currentActor = _unit.name;
+        
+        // Check if unit is dead
+        if (!instance_exists(_unit) || (_unit.hp <= 0))
+        {
+            statusProcessedThisTurn = false;
+            battleState = BattleStateVictoryCheck;
+            exit;
+        }
+        
+        // ===== PROCESS STATUS EFFECTS ONCE PER TURN =====
+        if (!statusProcessedThisTurn)
+        {
+            // Process all status effects for this unit
+            var _statusResult = StatusProcessTurnStart(_unit);
+            statusProcessedThisTurn = true;
+            
+            // Add all status messages to the queue
+            if (array_length(_statusResult.messages) > 0)
+            {
+                battleMessageQueue = _statusResult.messages;
+                battleText = battleMessageQueue[0];
+                array_delete(battleMessageQueue, 0, 1);
+                battleMessageDelay = 45; // 45 frames per message
+                
+                // If unit cannot act, we'll skip their turn after showing messages
+                if (!_statusResult.canAct)
+                {
+                    // After messages finish, skip to next turn
+                    // We'll handle this after all messages show
+                    if (array_length(battleMessageQueue) == 0)
+                    {
+                        statusProcessedThisTurn = false;
+                        battleState = BattleStateVictoryCheck;
+                    }
+                }
+                exit;
+            }
+            
+            // If no messages but unit can't act, skip turn immediately
+            if (!_statusResult.canAct)
+            {
+                statusProcessedThisTurn = false;
+                battleState = BattleStateVictoryCheck;
+                exit;
+            }
+        }
+        
+        // Player controlled unit - show action menu
+        if (_unit.object_index == Obj_BattleUnitPC)
+        {
+            _unit.defending = false;
+            BuildActionMenu(_unit);
+        }
+        else
+        {
+            // AI controlled unit
+            var _aiBehavior = global.GetEnemyAIBehavior(_unit.AIBehavior);
+            var _enemyAction = _aiBehavior(_unit);
+            if (_enemyAction != -1) BeginAction(_unit.id, _enemyAction[0], _enemyAction[1]);
+        }
+    }
 }
-
 //Start a unit action
 function BeginAction(_user, _action, _targets)
 {
@@ -413,10 +347,10 @@ function BattleStateVictoryCheck()
         }
     }
 
-    if (anyDead)
-    {
-        RecenterEnemies();
-    }
+    //if (anyDead)
+    //{
+    //    RecenterEnemies();
+    //}
 
     // Remove all dead party units (optional, if needed)
     for (var i = array_length(partyUnits) - 1; i >= 0; i--)
@@ -461,45 +395,24 @@ function BattleStateVictoryCheck()
 
 function BattleStateTurnProgression()
 {
-	// Apply DoTs to the unit whose turn just ended
-	if (!currentUser.dotAppliedThisTurn){
-		if (instance_exists(currentUser))
-		{
-			if (currentUser.poisonDoTTurns > 0)
-			{
-				currentUser.poisonDoTTurns--;
-				BattleChangeHP(currentUser, -currentUser.poisonDoTDamage);
-				// Immediately check for death
-	            BattleStateVictoryCheck();
-				currentUser.dotAppliedThisTurn = true;
-	            exit;
-			}
-			if (currentUser.burnDoTTurns > 0)
-			{
-				currentUser.burnDoTTurns--;
-				BattleChangeHP(currentUser, -currentUser.burnDoTDamage);
-				// Immediately check for death
-	            BattleStateVictoryCheck();
-				currentUser.dotAppliedThisTurn = true;
-				exit;
-			}
-		}
-	}
+    battleText = ""; // Reset battle text
+    battleMessageQueue = []; // Clear message queue
+    statusProcessedThisTurn = false; // Reset status processing flag
+    
+    turnCount++; // Total turns
+    turn++;
+    
+    // Loop turns - when we reach the end of turn order, start over
+    if (turn > array_length(unitTurnOrder) - 1)
+    {
+        turn = 0;
+        roundCount++;
+    }
 
-	battleText = ""; //reset battle text
-	turnCount++; //total turns
-	turn++;
-	//Loop turns
-	if (turn > array_length(unitTurnOrder) - 1)
-	{
-			turn = 0;
-			roundCount++;
-	}
+    // Regenerate MP at the start of each unit's turn
+    MPRegenerationPerTurn();
 
-	  // Call MP regeneration function here
-		MPRegenerationPerTurn();
-
-	battleState = BattleStateSelectAction;
+    battleState = BattleStateSelectAction;
 }
 
 
@@ -541,13 +454,11 @@ function BattleStateWaitingForInput()
 
 function BattleStateWin()
 {
-	
 	//Destroy all battle related stuffs
 	    with (Obj_BattleUnit)
     {
         instance_destroy();
     }
-	
 	// End battle and return to overworld
 	instance_activate_all();
 	global.steps = 0;
@@ -555,69 +466,69 @@ function BattleStateWin()
 	instance_destroy(Obj_Battle);
 }
 
-function BattleStateNapTime()
-{
-	waitForInput = true;
-	if (waitForInput) && wakeUp == 0
-	{
-		show_debug_message("Rolling Sleep Check");
-		battleText = string(napUnit.name) + " is stirring..."
+//function BattleStateNapTime()
+//{
+//	waitForInput = true;
+//	if (waitForInput) && wakeUp == 0
+//	{
+//		show_debug_message("Rolling Sleep Check");
+//		battleText = string(napUnit.name) + " is stirring..."
 
-		if keyboard_check_pressed(vk_space)
-		{
-			io_clear();
-			show_debug_message("Space Bar Pressed, Moving On");
-			if (irandom(1) == 0)
-			{
-				wakeUp = 1;
-			}
-			else
-			{
-				wakeUp = 2;
-			}
-		}
-		else
-		{
-			return;
-		}
-	}
+//		if keyboard_check_pressed(vk_space)
+//		{
+//			io_clear();
+//			show_debug_message("Space Bar Pressed, Moving On");
+//			if (irandom(1) == 0)
+//			{
+//				wakeUp = 1;
+//			}
+//			else
+//			{
+//				wakeUp = 2;
+//			}
+//		}
+//		else
+//		{
+//			return;
+//		}
+//	}
 
-	if wakeUp != 0 && (waitForInput)
-	{
-		if wakeUp == 1
-		{
-			show_debug_message("Enemy Wakes Up");
-			battleText = string(napUnit.name) + " woke up!"
-			napUnit.statusEffects.Sleep = false
-			if keyboard_check_pressed(vk_space)
-			{
-				show_debug_message("Space Bar Pressed, Moving On");
-				waitForInput = false;
-				wakeUp = 0; // Reset for next sleeping unit
-				battleState = BattleStateSelectAction;
-				exit;
-			}
-			else
-			{
-				return;
-			}
-		}
-		if wakeUp == 2
-		{
-			show_debug_message("Enemy Stays Sleep")
-			battleText = string(napUnit.name) + " is sleeping..."
-			if keyboard_check_pressed(vk_space)
-			{
-				show_debug_message("Space Bar Pressed, Moving On");
-				waitForInput = false;
-				wakeUp = 0; // Reset for next sleeping unit
-				battleState = BattleStateVictoryCheck;
-				exit;
-			}
-			else
-			{
-				return;
-			}
-		}
-	}
-}
+//	if wakeUp != 0 && (waitForInput)
+//	{
+//		if wakeUp == 1
+//		{
+//			show_debug_message("Enemy Wakes Up");
+//			battleText = string(napUnit.name) + " woke up!"
+//			napUnit.statusEffects.Sleep = false
+//			if keyboard_check_pressed(vk_space)
+//			{
+//				show_debug_message("Space Bar Pressed, Moving On");
+//				waitForInput = false;
+//				wakeUp = 0; // Reset for next sleeping unit
+//				battleState = BattleStateSelectAction;
+//				exit;
+//			}
+//			else
+//			{
+//				return;
+//			}
+//		}
+//		if wakeUp == 2
+//		{
+//			show_debug_message("Enemy Stays Sleep")
+//			battleText = string(napUnit.name) + " is sleeping..."
+//			if keyboard_check_pressed(vk_space)
+//			{
+//				show_debug_message("Space Bar Pressed, Moving On");
+//				waitForInput = false;
+//				wakeUp = 0; // Reset for next sleeping unit
+//				battleState = BattleStateVictoryCheck;
+//				exit;
+//			}
+//			else
+//			{
+//				return;
+//			}
+//		}
+//	}
+//}

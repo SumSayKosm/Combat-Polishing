@@ -1,49 +1,78 @@
 global.blekActionLibrary =
 {
-	GhostCatV2 :
-	{
-	    name : "Ghost Cat",
-	    description: "{0} triggers lingering wounds!",
-	    subMenu : -1,
-	    requiresMP: true,
-	    mpCost: 15, // <- base cost for the menu
-	    targetRequired : true,
-	    targetEnemyByDefault : true,
-	    targetAll : MODE.NEVER,
-	    userAnimation : "attack",
-	    effectSprite : sAttackSlash,
-	    effectOnTarget : MODE.ALWAYS,
-	    func : function(_user, _targets)
-	    {
-	        var target = _targets[0];
-	        var totalDoTDamage = 0;
-	        var extraMPCost = 0;
-
-	        if (real(target.poisonDoTTurns) > 0)
-	        {
-	            totalDoTDamage += real(target.poisonDoTDamage) * real(target.poisonDoTTurns);
-	            extraMPCost += real(target.poisonDoTTurns);
-	            target.poisonDoTTurns = 0;
-	        }
-
-	        if (real(target.burnDoTTurns) > 0)
-	        {
-	            totalDoTDamage += real(target.burnDoTDamage) * real(target.burnDoTTurns);
-	            extraMPCost += real(target.burnDoTTurns);
-	            target.burnDoTTurns = 0;
-	        }
-
-	        if (totalDoTDamage > 0)
-	        {
-				show_debug_message("Detonation total damage: " + string(totalDoTDamage));
-	            BattleChangeHP(target, -totalDoTDamage);
-	        }
-
-	        // Deduct MP dynamically
-	        var finalMPCost = mpCost + extraMPCost;
-	        BattleChangeMP(_user, -finalMPCost);
-	    }
-	},
+GhostCatV2 :
+{
+    name : "Ghost Cat",
+    description: "{0} triggers lingering wounds!",
+    subMenu : -1,
+    requiresMP: true,
+    mpCost: 15, // Base MP cost shown in menu
+    targetRequired : true,
+    targetEnemyByDefault : true,
+    targetAll : MODE.NEVER,
+    userAnimation : "attack",
+    effectSprite : sAttackSlash,
+    effectOnTarget : MODE.ALWAYS,
+    
+    func : function(_user, _targets)
+    {
+        var target = _targets[0];
+        var totalDoTDamage = 0;
+        var extraMPCost = 0;
+        var detonatedEffects = []; // Track which effects we removed
+        
+        // Loop through all active status effects on the target
+        for (var i = array_length(target.statusEffects) - 1; i >= 0; i--)
+        {
+            var _status = target.statusEffects[i];
+            var _def = _status.definition;
+            
+            // Only detonate damage-over-time effects
+            // Check if the status type is "dot" (damage over time)
+            if (_def.type == "dot")
+            {
+                // Calculate total remaining damage
+                // damage * turns remaining = total damage left to deal
+                var _remainingDamage = _status.data.damage * _status.duration;
+                totalDoTDamage += _remainingDamage;
+                
+                // Add to MP cost (1 MP per turn of DoT remaining)
+                extraMPCost += _status.duration;
+                
+                // Track which effect we're removing
+                array_push(detonatedEffects, _status.type);
+                
+                // Remove the DoT effect from target
+                array_delete(target.statusEffects, i, 1);
+            }
+            // Ignore all other status types (disable, debuff, buff)
+            // Sleep and freeze will break naturally from taking damage
+        }
+        
+        // Deal the detonated damage
+        if (totalDoTDamage > 0)
+        {
+            show_debug_message("Ghost Cat detonated " + string(array_length(detonatedEffects)) + " effects!");
+            show_debug_message("Total detonation damage: " + string(totalDoTDamage));
+            
+            // Deal all the damage at once
+            BattleChangeHP(target, -totalDoTDamage);
+            
+            // Note: Sleep and freeze will break automatically via StatusOnTakeDamage
+            // which is called inside BattleChangeHP when damage is dealt
+        }
+        else
+        {
+            show_debug_message("Ghost Cat found no DoT effects to detonate!");
+        }
+        
+        // Deduct MP dynamically based on how much damage was detonated
+        var finalMPCost = mpCost + extraMPCost;
+        BattleChangeMP(_user, -finalMPCost);
+        
+        show_debug_message("Ghost Cat MP cost: " + string(finalMPCost) + " (base: " + string(mpCost) + " + extra: " + string(extraMPCost) + ")");
+    }
+},
 
 	defend :
 	{
@@ -189,7 +218,7 @@ global.blekActionLibrary =
 		    BattleChangeMP(_user, -mpCost);
 		}
 	},
-	nervesAttack :
+	Attack :
 	{
 		name : "Attack",
 		description : "{0} attacks!",

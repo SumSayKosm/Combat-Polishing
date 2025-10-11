@@ -1,11 +1,5 @@
-//NewEncounter(
-//		[global.enemyData.StoneSlime, global.enemyData.StoneSlime],
-//		Spr_BattleBackground
-//	);
-
-// Define a pool of 3 behaviors
 NewEncounterCustom(
-    [global.enemyData.StoneSlime, global.enemyData.StoneSlime, global.enemyData.StoneSlime],
-    Spr_BattleBackground,
-    ["defensive", "defensive", "defensive"]
+    [global.enemyData.Skeleton_1, global.enemyData.Skeleton_1, global.enemyData.Skeleton_1],
+    Spr_ForestBattle,
+    ["defensive"]
 );

@@ -72,8 +72,8 @@
   "nineSlice":null,
   "origin":0,
   "parent":{
-    "name":"Sprites",
-    "path":"folders/Sprites.yy",
+    "name":"OldSprites",
+    "path":"folders/Sprites/OldSprites.yy",
   },
   "preMultiplyAlpha":false,
   "resourceType":"GMSprite",

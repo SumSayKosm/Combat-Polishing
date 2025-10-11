@@ -12,6 +12,7 @@ for (var i = 0; i < array_length(unitRenderOrder); i++)
 }
 
 // Helper function to get stat color based on current/max ratio
+// Returns different colors to indicate health status at a glance
 GetStatColor = function(_current, _max, _isDead)
 {
 	if (_isDead) return c_red;
@@ -19,261 +20,152 @@ GetStatColor = function(_current, _max, _isDead)
 	return c_white;
 }
 
-//Old Boxes
-//draw_sprite_stretched(Spr_Box,0,x+75,y+120,245,60);
-//draw_sprite_stretched(Spr_Box,0,x,y+120,74,60);
+// ===== NEW SIDE PANEL UI =====
+// Draw a vertical panel on the left side for party status
 
-//for (var i = 0; i < array_length(global.party); i++)
-//	{
-//		draw_sprite_stretched(Spr_Box,0,x + 75 + (i * 100),y+120,75,60);
-//	}
+// Panel dimensions
+var panelX = x + 5;
+var panelY = y + 10;
+var panelWidth = 70;
+var partyMemberHeight = 70;
+var partyMemberSpacing = 5;
 
-//Positions
-#macro COLUMN_ENEMY 15
-#macro COLUMN_NAME 90
-#macro COLUMN_HP 160
-#macro COLUMN_MP 220
-
-//Draw headings
-draw_set_font(Font1);
-draw_set_halign(fa_left);
-draw_set_valign(fa_top);
-draw_set_color(c_gray);
-//draw_text(x+COLUMN_ENEMY,y+120,"ENEMY");
-//draw_text(x+COLUMN_NAME,y+120,"NAME");
-//draw_text(x+COLUMN_HP,y+120,"HP");
-//draw_text(x+COLUMN_MP,y+120,"MP");
-
-//for (var i = 0; i < array_length(global.party); i++)
-//{
-//	//draw_text(x+COLUMN_NAME+(i*100),y+120,"NAME");
-//	draw_text(x+COLUMN_HP+(i*100),y+130,"HP");
-//	draw_text(x+COLUMN_MP+(i*100),y+150,"MP");
-//}
-
-
-////Draw enemy names
-//draw_set_font(Font1);
-//draw_set_halign(fa_left);
-//draw_set_valign(fa_top);
-//draw_set_color(c_white);
-//var _drawLimit = 3;
-//var _drawn = 0;
-//for (var i = 0; (i < array_length(enemyUnits)) && (_drawn < _drawLimit); i++)
-//{
-//	var _char = enemyUnits[i];
-//	if (_char.hp > 0)
-//	{
-//		_drawn++;
-//		draw_set_halign(fa_left);
-//		draw_set_color(c_white);
-//		if (_char.id == _unitWithCurrentTurn) draw_set_color(c_yellow);
-//		draw_text(x+COLUMN_ENEMY,y+130+(i*12),_char.name);
-//	}
-//}
-
-////Draw party info
-//for (var i = 0; i < array_length(partyUnits); i++)
-//{
-//	draw_set_halign(fa_left);
-//	draw_set_color(c_blue);
-//	var _char = partyUnits[i];
-//	if (_char.id == _unitWithCurrentTurn) draw_set_color(c_yellow);
-//	if (_char.hp <= 0) draw_set_color(c_red);
-//	draw_text(x+COLUMN_NAME,y+110+(i*12),_char.name);
-//	draw_set_halign(fa_right);
-	
-//	draw_set_color(c_white);
-//	if (_char.hp < (_char.hpMax * 0.5)) draw_set_color(c_orange);
-//	if (_char.hp <= 0) draw_set_color(c_red);
-//	draw_text(x+COLUMN_HP+50,y+130+(i*12),string(_char.hp) + "/" + string(_char.hpMax));
-	
-//	draw_set_color(c_white);
-//	if (_char.mp < (_char.mpMax * 0.5)) draw_set_color(c_orange);
-//	if (_char.hp <= 0) draw_set_color(c_red);
-//	draw_text(x+COLUMN_MP+50,y+130+(i*12),string(_char.mp) + "/" + string(_char.mpMax));
-	
-//	draw_set_color(c_white);
-//}
-
-//var baseX = 75;
-//var baseY = 120;
-
-//// bar sizing
-//var tileWidth = sprite_get_width(Spr_HPBarTile);
-//var tileHeight = sprite_get_height(Spr_HPBarTile);
-//var barWidth = 60; // total bar width in pixels
-//var barSpacing = 2; // space between HP and MP bars
-//var memberSpacing = 10; // space between party members
-
-//for (var i = 0; i < array_length(partyUnits); i++)
-//{
-//    var _char = partyUnits[i];
-//    var drawX = baseX;
-//    var drawY = baseY + i * ((tileHeight * 2) + barSpacing + memberSpacing);
-
-//    // --- HP Bar ---
-//    var hpPercent = clamp(_char.hp / _char.hpMax, 0, 1);
-//    var maxTiles = barWidth div tileWidth;
-//    var tilesToDraw = ceil(maxTiles * hpPercent);
-
-//    // background
-//    draw_sprite(Spr_BarBG, 0, drawX, drawY);
-
-//    // fill
-//    for (var t = 0; t < tilesToDraw; t++)
-//    {
-//        draw_sprite(Spr_HPBarTile, 0, drawX + t * tileWidth, drawY);
-//    }
-
-//    // border
-//    draw_sprite(Spr_BarBorder, 0, drawX, drawY);
-
-//    // --- MP Bar (below HP bar) ---
-//    var mpPercent = clamp(_char.mp / _char.mpMax, 0, 1);
-//    var tilesToDrawMP = ceil(maxTiles * mpPercent);
-//    var mpY = drawY + tileHeight + barSpacing;
-
-//    draw_sprite(Spr_BarBG, 0, drawX, mpY);
-
-//    for (var t = 0; t < tilesToDrawMP; t++)
-//    {
-//        draw_sprite(Spr_MPBarTile, 0, drawX + t * tileWidth, mpY);
-//    }
-
-//    draw_sprite(Spr_BarBorder, 0, drawX, mpY);
-//}
-
-/// DrawPartyHUD()
-// Call this in Obj_Battle Draw Event
-
-var startX = 16;               // top-left corner X
-var startY = 16;               // top-left corner Y
-var spacingY = 28;             // vertical space between each unit's bars
-var boxPadding = 4;            // padding inside the background box
-var barWidth = 100;            // width of the HP/MP bars
-var barHeight = 8;             // height of each bar
-
+// Draw party member panels
 for (var i = 0; i < array_length(partyUnits); i++)
 {
-    var _unit = partyUnits[i];
-    if (!instance_exists(_unit)) continue;
-
-    var posX = startX;
-    var posY = startY + i * spacingY;
-
-    // Draw background box (slightly larger than bars)
-    var boxWidth = barWidth + boxPadding*2;
-    var boxHeight = barHeight*2 + boxPadding*3; // space for HP + MP
-    draw_sprite_stretched(Spr_UIBox, 0, posX, posY, boxWidth, boxHeight);
-
-    // --- HP Bar ---
-    var hpPercent = clamp(_unit.hp / _unit.hpMax, 0, 1);
-    var hpBarWidth = hpPercent * barWidth;
-
-    draw_set_color(c_black);
-    draw_rectangle(posX + boxPadding, posY + boxPadding, posX + boxPadding + barWidth, posY + boxPadding + barHeight, false); // bar background
-    draw_set_color(_unit.hp <= 0 ? c_red : (hpPercent < 0.5 ? c_orange : c_green));
-    draw_rectangle(posX + boxPadding, posY + boxPadding, posX + boxPadding + hpBarWidth, posY + boxPadding + barHeight, false);
-
-    // --- MP Bar ---
-    var mpPercent = clamp(_unit.mp / _unit.mpMax, 0, 1);
-    var mpBarWidth = mpPercent * barWidth;
-
-    draw_set_color(c_black);
-    draw_rectangle(posX + boxPadding, posY + boxPadding + barHeight + boxPadding, posX + boxPadding + barWidth, posY + boxPadding + barHeight*2 + boxPadding, false); // bar background
-    draw_set_color(_unit.mp <= 0 ? c_red : (mpPercent < 0.5 ? c_orange : c_blue));
-    draw_rectangle(posX + boxPadding, posY + boxPadding + barHeight + boxPadding, posX + boxPadding + mpBarWidth, posY + boxPadding + barHeight*2 + boxPadding, false);
-
-    draw_set_color(c_white); // reset color
+	var _char = partyUnits[i];
+	var memberY = panelY + (i * (partyMemberHeight + partyMemberSpacing));
+	
+	// Draw background box for this party member
+	draw_sprite_stretched(Spr_UIBox, 0, panelX, memberY, panelWidth, partyMemberHeight);
+	
+	// Determine if this unit has the current turn (for highlighting)
+	var isCurrentTurn = (_char.id == _unitWithCurrentTurn);
+	var isDead = (_char.hp <= 0);
+	
+	// Draw character name
+	draw_set_font(Font1);
+	draw_set_halign(fa_center);
+	draw_set_valign(fa_top);
+	
+	// Color code the name based on status
+	if (isCurrentTurn) {
+		draw_set_color(c_yellow); // Yellow = currently acting
+	} else if (isDead) {
+		draw_set_color(c_red); // Red = dead
+	} else {
+		draw_set_color(c_white); // White = normal
+	}
+	
+	draw_text(panelX + (panelWidth / 2), memberY + 3, _char.name);
+	
+	// Draw HP bar
+	var barX = panelX + 5;
+	var barY = memberY + 18;
+	var barWidth = panelWidth - 10;
+	var barHeight = 8;
+	
+	// HP bar background (darker)
+	draw_set_color(c_dkgray);
+	draw_rectangle(barX, barY, barX + barWidth, barY + barHeight, false);
+	
+	// HP bar fill (proportional to current HP)
+	var hpPercent = _char.hp / _char.hpMax;
+	var hpBarWidth = barWidth * hpPercent;
+	
+	// Color the HP bar based on percentage
+	if (isDead) {
+		draw_set_color(c_red);
+	} else if (_char.hp < (_char.hpMax * 0.5)) {
+		draw_set_color(c_orange);
+	} else {
+		draw_set_color(c_lime);
+	}
+	draw_rectangle(barX, barY, barX + hpBarWidth, barY + barHeight, false);
+	
+	// HP bar outline
+	draw_set_color(c_white);
+	draw_rectangle(barX, barY, barX + barWidth, barY + barHeight, true);
+	
+	// Draw HP text (numerical value)
+	draw_set_halign(fa_center);
+	draw_set_color(c_white);
+	draw_text(panelX + (panelWidth / 2), barY + 10, "HP: " + string(_char.hp) + "/" + string(_char.hpMax));
+	
+	// Draw MP bar
+	barY = memberY + 40; // Position below HP bar
+	
+	// MP bar background (darker)
+	draw_set_color(c_dkgray);
+	draw_rectangle(barX, barY, barX + barWidth, barY + barHeight, false);
+	
+	// MP bar fill (proportional to current MP)
+	var mpPercent = _char.mp / _char.mpMax;
+	var mpBarWidth = barWidth * mpPercent;
+	
+	// Color the MP bar based on percentage
+	if (isDead) {
+		draw_set_color(c_red);
+	} else if (_char.mp < (_char.mpMax * 0.5)) {
+		draw_set_color(c_orange);
+	} else {
+		draw_set_color(c_aqua); // Blue for MP
+	}
+	draw_rectangle(barX, barY, barX + mpBarWidth, barY + barHeight, false);
+	
+	// MP bar outline
+	draw_set_color(c_white);
+	draw_rectangle(barX, barY, barX + barWidth, barY + barHeight, true);
+	
+	// Draw MP text (numerical value)
+	draw_set_halign(fa_center);
+	draw_set_color(c_white);
+	draw_text(panelX + (panelWidth / 2), barY + 10, "MP: " + string(_char.mp) + "/" + string(_char.mpMax));
 }
 
+// Draw enemy info panel (optional - shows enemy names)
+// This creates a small panel on the right side showing active enemies
+var enemyPanelX = x + 525;
+var enemyPanelY = y + 10;
 
-
-
-
-
-
-//// Draw party info
-//for (var i = 0; i < array_length(partyUnits); i++)
-//{
-//    draw_set_halign(fa_left);
-//    draw_set_color(c_blue);
-//    var _char = partyUnits[i];
-//    var _isDead = _char.hp <= 0;
-
-//    if (_char.id == _unitWithCurrentTurn) draw_set_color(c_yellow);
-//    if (_isDead) draw_set_color(c_red);
-//    draw_text(x + COLUMN_NAME + (i * 100), y + 110, _char.name);
-
-//    // Draw head sprite next to the name
-//    var headSprite = _char.sprites.head;
-//    draw_sprite(headSprite, 0, x + COLUMN_NAME + (i * 100) - 20, y + 110);
-
-//    draw_set_halign(fa_right);
-
-//    // Draw HP with color based on value
-//    draw_set_color(GetStatColor(_char.hp, _char.hpMax, _isDead));
-//    draw_text(x + COLUMN_HP + (i * 100), y + 130, string(_char.hp) + "/" + string(_char.hpMax));
-
-//    // Draw MP with color based on value
-//    draw_set_color(GetStatColor(_char.mp, _char.mpMax, _isDead));
-//    draw_text(x + COLUMN_MP + (i * 100), y + 150, string(_char.mp) + "/" + string(_char.mpMax));
-
-//    draw_set_color(c_white);
-//}
-
-
-
-
-////Draw target cursor
-//if (cursor.active)
-//{
-//	with (cursor)
-//	{
-//		if (activeTarget != noone) 
-//		{
-//			if (!is_array(activeTarget))
-//			{
-//				draw_sprite(Spr_TarSelect,-1,activeTarget.x,activeTarget.y);
-//			}
-//			else 
-//			{
-//				draw_set_alpha(sin(get_timer()/50000)+1);
-//				for (var i = 0; i < array_length(activeTarget); i++)
-//				{
-//					draw_sprite(Spr_TarSelect,-1,activeTarget[i].x,activeTarget[i].y);
-//				}
-//				draw_set_alpha(1.0);
-//			}
-//		}
-//	}
-//}
-if (cursor.active && cursor.activeTarget != noone){
-	var _target = cursor.activeTarget;
-draw_target_tooltip(_target);
+// Calculate the width needed based on longest enemy name
+draw_set_font(Font1); // Set font first so string_width is accurate
+var maxNameWidth = 0;
+for (var i = 0; i < array_length(enemyUnits); i++)
+{
+	var nameWidth = string_width(enemyUnits[i].name);
+	if (nameWidth > maxNameWidth) maxNameWidth = nameWidth;
 }
-//// Assuming `cursor.active` is true and `cursor.activeTarget` is set
-//if (cursor.active && cursor.activeTarget != noone) {
-//    var _target = cursor.activeTarget;
 
-//    // Tooltip position
-//    var tooltipX = _target.x + 16; // offset so it doesn't overlap the sprite
-//    var tooltipY = _target.y - 16;
+// Width = longest name + padding for comfortable margins
+var enemyPanelWidth = maxNameWidth + 20; // 10px padding on each side
+var enemyPanelHeight = 20 + (array_length(enemyUnits) * 12);
 
-//    // Draw box
-//    draw_sprite_stretched(Spr_Box, 0, tooltipX, tooltipY, 100, 24);
+draw_sprite_stretched(Spr_UIBox, 0, enemyPanelX, enemyPanelY, enemyPanelWidth, enemyPanelHeight);
+draw_set_halign(fa_center);
+draw_set_valign(fa_top);
+draw_set_color(c_white);
+draw_text(enemyPanelX + (enemyPanelWidth / 2), enemyPanelY + 3, "ENEMIES");
 
-//    // Draw enemy name
-//    draw_set_color(c_white);
-//    draw_set_font(Font1);
-//    draw_set_halign(fa_left);
-//    draw_set_valign(fa_middle);
-//    draw_text(tooltipX + 4, tooltipY + 12, _target.name);
-//}
+// List enemy names
+var _drawLimit = 5; // Maximum enemies to show in list
+for (var i = 0; (i < array_length(enemyUnits)) && (i < _drawLimit); i++)
+{
+	var _char = enemyUnits[i];
+	if (_char.hp > 0)
+	{
+		draw_set_halign(fa_center);
+		// Highlight if it's this enemy's turn
+		if (_char.id == _unitWithCurrentTurn) {
+			draw_set_color(c_red);
+		} else {
+			draw_set_color(c_white);
+		}
+		draw_text(enemyPanelX + (enemyPanelWidth / 2), enemyPanelY + 18 + (i * 12), _char.name);
+	}
+}
 
-
-// Draw target highlight instead of a cursor sprite
+// Draw target highlight (shows which unit is being targeted)
 if (cursor.active)
 {
     with (cursor)
@@ -282,7 +174,7 @@ if (cursor.active)
         {
             if (!is_array(activeTarget))
             {
-                // Highlight single target
+                // Highlight single target by making them flash or have a visual indicator
                 activeTarget.highlighted = true;
             }
             else
@@ -297,13 +189,103 @@ if (cursor.active)
     }
 }
 
-
-//Draw battle text
+// Draw battle text at the top center
+// This shows action descriptions like "Ghost used Attack!"
 if (battleText != "")
 {
-	var _w = string_width(battleText)+20;
-	draw_sprite_stretched(Spr_Box,0,x+160-(_w*0.5),y+5,_w,25);
+	var _w = string_width(battleText) + 20;
+	draw_sprite_stretched(Spr_UIBox, 0, x + 320 - (_w * 0.5), y + 5, _w, 25);
 	draw_set_halign(fa_center);
+	draw_set_valign(fa_top);
 	draw_set_color(c_white);
-	draw_text(x+160,y+10,battleText);
+	draw_text(x + 320, y + 10, battleText);
 }
+
+//// Reset draw settings to defaults
+//draw_set_color(c_white);
+//draw_set_halign(fa_left);
+//draw_set_valign(fa_top);
+
+////Show Turn Order
+//var xStart = x +80;  // starting X position (adjust for your layout)
+//var yStart = 20;   // starting Y position on screen
+//var spacing = 10;  // vertical space between each unit entry
+
+//    draw_set_font(Font1);
+//    draw_set_halign(fa_left);
+//    draw_set_color(c_white);
+
+//    draw_text(xStart, yStart - 10, "Turn Order:");
+
+//    for (var i = 0; i < array_length(unitTurnOrder); i++)
+//    {
+//        var _unit = unitTurnOrder[i];
+
+//        // Skip if unit is no longer valid
+//        if (!instance_exists(_unit)) continue;
+//        if (_unit.hp <= 0) continue; // skip dead units
+
+//        // Optional: Highlight current actor
+//        if (i == turn)
+//            draw_set_color(c_yellow);
+//        else
+//            draw_set_color(c_white);
+
+//        // Draw either sprite, name, or portrait
+//        draw_text(xStart, yStart + (i * spacing), _unit.name);
+
+//		draw_sprite_stretched(Spr_UIBox,0,x,y,1,1);
+//    }
+
+//    draw_set_color(c_white);
+
+// === TURN ORDER DISPLAY ===
+var _x = 100; // starting x position (adjust for your layout)
+var _y = 20;  // top position
+var _padding = 8;
+var _lineHeight = 20;
+
+// Measure total width and height needed
+var _maxWidth = 0;
+var _totalHeight = 0;
+var _validUnits = [];
+
+// Collect valid units (skip dead ones)
+for (var i = 0; i < array_length(unitTurnOrder); i++)
+{
+    var _unit = unitTurnOrder[i];
+    if (instance_exists(_unit))
+    {
+        array_push(_validUnits, _unit);
+        var _textWidth = string_width(_unit.name);
+        if (_textWidth > _maxWidth) _maxWidth = _textWidth;
+        _totalHeight += string_height(_unit.name);
+    }
+}
+
+// Add spacing between names
+_totalHeight += (_lineHeight - string_height("A")) * (array_length(_validUnits) - 1);
+
+// Add padding for box
+var _boxWidth = _maxWidth + (_padding * 2);
+var _boxHeight = _totalHeight + (_padding * 2);
+
+// Draw the stretched box first
+draw_sprite_stretched(Spr_UIBox, 0, _x - _padding, _y - _padding, _boxWidth, _boxHeight);
+
+// Title (optional)
+draw_set_font(Font1);
+draw_set_color(c_white);
+draw_text(_x + 45, _y - 20, "Turn Order:");
+
+// Draw the names inside the box
+var _textY = _y;
+for (var i = 0; i < array_length(_validUnits); i++)
+{
+    var _unit = _validUnits[i];
+    draw_set_color(c_white);
+    draw_text(_x+ 45, _textY, _unit.name);
+    _textY += _lineHeight;
+}
+
+draw_set_color(c_white);

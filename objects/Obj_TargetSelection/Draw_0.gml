@@ -1,5 +1,5 @@
 // Draw Event for Obj_TargetSelectionScreen
-draw_sprite_stretched(Spr_Box, 0, x - margin, y - margin, widthFull, heightFull);
+draw_sprite_stretched(Spr_UIBox, 0, x - margin, y - margin, widthFull, heightFull);
 
 draw_set_color(c_white);
 draw_set_font(Font1);
